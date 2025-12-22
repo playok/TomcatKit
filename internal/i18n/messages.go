@@ -1086,6 +1086,80 @@ Shared secret for AJP connector authentication.
 
 [gray]Generate with: openssl rand -base64 32[-]`,
 
+		"help.connector.service": `[::b]Service[::-]
+Select which Tomcat Service to add the connector to.
+
+[yellow]Default:[-] Catalina
+
+[green]Info:[-]
+• A Service groups connectors with an Engine
+• Most installations have one Service: Catalina
+• Multiple Services allow separate connector groups`,
+
+		"help.connector.sslprotocol": `[::b]SSL Protocol[::-]
+SSL/TLS protocol version to use.
+
+[yellow]Recommended:[-] TLS
+
+[green]Options:[-]
+• [yellow]TLS[-]: Auto-negotiate best version (recommended)
+• [yellow]TLSv1.2[-]: Force TLS 1.2 only
+• [yellow]TLSv1.3[-]: Force TLS 1.3 only (requires Java 11+)
+
+[red]Avoid:[-]
+• SSLv3, TLSv1, TLSv1.1 are deprecated/insecure`,
+
+		"help.connector.keystorefile": `[::b]Keystore File[::-]
+Path to the Java keystore containing the SSL certificate.
+
+[yellow]Default:[-] ${user.home}/.keystore
+
+[green]Common locations:[-]
+• conf/localhost-rsa.jks (Tomcat default)
+• /etc/ssl/tomcat/keystore.jks
+
+[gray]Create with keytool:
+keytool -genkey -alias tomcat -keyalg RSA
+  -keystore keystore.jks -keysize 2048[-]`,
+
+		"help.connector.keystorepass": `[::b]Keystore Password[::-]
+Password for the Java keystore file.
+
+[yellow]Default:[-] changeit
+
+[red]Security:[-]
+• Always change default password
+• Use strong passwords (12+ chars)
+• Consider using secretRequired for production
+
+[gray]Tip: Store password in separate file using
+keystorePass="${catalina.base}/conf/pass.txt"[-]`,
+
+		"help.connector.keystoretype": `[::b]Keystore Type[::-]
+Format of the keystore file.
+
+[yellow]Options:[-]
+• [yellow]JKS[-]: Java KeyStore (traditional, default)
+• [yellow]PKCS12[-]: More portable, industry standard
+• [yellow]JCEKS[-]: Enhanced Java keystore
+
+[green]Recommendation:[-]
+• Use PKCS12 for new deployments
+• JKS for legacy compatibility`,
+
+		"help.connector.clientauth": `[::b]Client Authentication[::-]
+Whether to require client SSL certificates.
+
+[yellow]Options:[-]
+• [yellow]false[-]: No client cert (default)
+• [yellow]want[-]: Request but don't require
+• [yellow]true[-]: Require client certificate
+
+[green]Use cases:[-]
+• false: Standard HTTPS websites
+• want: Optional mutual TLS
+• true: B2B, high-security APIs`,
+
 		// Security Help
 		"help.security.realm": `[::b]Realm[::-]
 A Realm connects Tomcat to a user/role database for authentication.
@@ -4078,6 +4152,80 @@ AJP 커넥터 인증을 위한 공유 비밀입니다.
 
 [gray]생성 명령: openssl rand -base64 32[-]`,
 
+		"help.connector.service": `[::b]Service[::-]
+커넥터를 추가할 Tomcat Service를 선택합니다.
+
+[yellow]기본값:[-] Catalina
+
+[green]정보:[-]
+• Service는 커넥터와 엔진을 그룹화합니다
+• 대부분의 설치에는 하나의 Service: Catalina
+• 여러 Service로 별도의 커넥터 그룹 구성 가능`,
+
+		"help.connector.sslprotocol": `[::b]SSL 프로토콜[::-]
+사용할 SSL/TLS 프로토콜 버전입니다.
+
+[yellow]권장:[-] TLS
+
+[green]옵션:[-]
+• [yellow]TLS[-]: 최상의 버전 자동 협상 (권장)
+• [yellow]TLSv1.2[-]: TLS 1.2만 사용
+• [yellow]TLSv1.3[-]: TLS 1.3만 사용 (Java 11+ 필요)
+
+[red]피해야 함:[-]
+• SSLv3, TLSv1, TLSv1.1은 사용 중단/보안 취약`,
+
+		"help.connector.keystorefile": `[::b]Keystore 파일[::-]
+SSL 인증서가 포함된 Java keystore 경로입니다.
+
+[yellow]기본값:[-] ${user.home}/.keystore
+
+[green]일반적인 위치:[-]
+• conf/localhost-rsa.jks (Tomcat 기본값)
+• /etc/ssl/tomcat/keystore.jks
+
+[gray]keytool로 생성:
+keytool -genkey -alias tomcat -keyalg RSA
+  -keystore keystore.jks -keysize 2048[-]`,
+
+		"help.connector.keystorepass": `[::b]Keystore 비밀번호[::-]
+Java keystore 파일의 비밀번호입니다.
+
+[yellow]기본값:[-] changeit
+
+[red]보안:[-]
+• 기본 비밀번호를 반드시 변경
+• 강력한 비밀번호 사용 (12자 이상)
+• 운영 환경에서는 secretRequired 사용 고려
+
+[gray]팁: 별도 파일에 비밀번호 저장 가능
+keystorePass="${catalina.base}/conf/pass.txt"[-]`,
+
+		"help.connector.keystoretype": `[::b]Keystore 유형[::-]
+keystore 파일의 형식입니다.
+
+[yellow]옵션:[-]
+• [yellow]JKS[-]: Java KeyStore (전통적, 기본값)
+• [yellow]PKCS12[-]: 더 이식성 있음, 업계 표준
+• [yellow]JCEKS[-]: 향상된 Java keystore
+
+[green]권장사항:[-]
+• 새 배포에는 PKCS12 사용
+• 레거시 호환성에는 JKS`,
+
+		"help.connector.clientauth": `[::b]클라이언트 인증[::-]
+클라이언트 SSL 인증서 요구 여부입니다.
+
+[yellow]옵션:[-]
+• [yellow]false[-]: 클라이언트 인증서 없음 (기본값)
+• [yellow]want[-]: 요청하지만 필수 아님
+• [yellow]true[-]: 클라이언트 인증서 필수
+
+[green]사용 사례:[-]
+• false: 일반 HTTPS 웹사이트
+• want: 선택적 상호 TLS
+• true: B2B, 높은 보안 API`,
+
 		// 보안 도움말
 		"help.security.realm": `[::b]Realm[::-]
 Realm은 인증을 위해 Tomcat을 사용자/역할 데이터베이스에 연결합니다.
@@ -6465,6 +6613,80 @@ AJPコネクタ認証用の共有シークレットです。
 • Apache: ProxyPass ajp://host:8009 secret=yourSecretValue
 
 [gray]生成コマンド: openssl rand -base64 32[-]`,
+
+		"help.connector.service": `[::b]Service[::-]
+コネクタを追加するTomcat Serviceを選択します。
+
+[yellow]デフォルト:[-] Catalina
+
+[green]情報:[-]
+• Serviceはコネクタとエンジンをグループ化
+• ほとんどのインストールには1つのService: Catalina
+• 複数のServiceで別々のコネクタグループを構成可能`,
+
+		"help.connector.sslprotocol": `[::b]SSLプロトコル[::-]
+使用するSSL/TLSプロトコルバージョンです。
+
+[yellow]推奨:[-] TLS
+
+[green]オプション:[-]
+• [yellow]TLS[-]: 最適なバージョンを自動ネゴシエート (推奨)
+• [yellow]TLSv1.2[-]: TLS 1.2のみ使用
+• [yellow]TLSv1.3[-]: TLS 1.3のみ使用 (Java 11+必要)
+
+[red]避けるべき:[-]
+• SSLv3, TLSv1, TLSv1.1は非推奨/脆弱`,
+
+		"help.connector.keystorefile": `[::b]Keystoreファイル[::-]
+SSL証明書を含むJava keystoreのパスです。
+
+[yellow]デフォルト:[-] ${user.home}/.keystore
+
+[green]一般的な場所:[-]
+• conf/localhost-rsa.jks (Tomcatデフォルト)
+• /etc/ssl/tomcat/keystore.jks
+
+[gray]keytoolで作成:
+keytool -genkey -alias tomcat -keyalg RSA
+  -keystore keystore.jks -keysize 2048[-]`,
+
+		"help.connector.keystorepass": `[::b]Keystoreパスワード[::-]
+Java keystoreファイルのパスワードです。
+
+[yellow]デフォルト:[-] changeit
+
+[red]セキュリティ:[-]
+• デフォルトパスワードを必ず変更
+• 強力なパスワードを使用 (12文字以上)
+• 本番環境ではsecretRequiredの使用を検討
+
+[gray]ヒント: 別ファイルにパスワードを保存可能
+keystorePass="${catalina.base}/conf/pass.txt"[-]`,
+
+		"help.connector.keystoretype": `[::b]Keystoreタイプ[::-]
+keystoreファイルの形式です。
+
+[yellow]オプション:[-]
+• [yellow]JKS[-]: Java KeyStore (伝統的、デフォルト)
+• [yellow]PKCS12[-]: より移植性が高い、業界標準
+• [yellow]JCEKS[-]: 拡張Java keystore
+
+[green]推奨事項:[-]
+• 新規デプロイにはPKCS12を使用
+• レガシー互換性にはJKS`,
+
+		"help.connector.clientauth": `[::b]クライアント認証[::-]
+クライアントSSL証明書の要求有無です。
+
+[yellow]オプション:[-]
+• [yellow]false[-]: クライアント証明書なし (デフォルト)
+• [yellow]want[-]: 要求するが必須ではない
+• [yellow]true[-]: クライアント証明書必須
+
+[green]使用例:[-]
+• false: 標準HTTPS Webサイト
+• want: オプションの相互TLS
+• true: B2B、高セキュリティAPI`,
 
 		// セキュリティヘルプ
 		"help.security.realm": `[::b]Realm[::-]

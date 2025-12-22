@@ -33,6 +33,41 @@ var ajpConnectorHelpKeysByIndex = []string{
 	"help.connector.executor",       // 5: Executor
 }
 
+// Add HTTP Connector form help keys (by form field index)
+var addHTTPConnectorHelpKeysByIndex = []string{
+	"help.connector.service",           // 0: Service
+	"help.connector.port",              // 1: Port
+	"help.connector.protocol",          // 2: Protocol
+	"help.connector.connectiontimeout", // 3: Connection Timeout
+	"help.connector.maxthreads",        // 4: Max Threads
+	"help.connector.minsparethreads",   // 5: Min Spare Threads
+	"help.connector.redirectport",      // 6: Redirect Port
+}
+
+// Add AJP Connector form help keys (by form field index)
+var addAJPConnectorHelpKeysByIndex = []string{
+	"help.connector.service",        // 0: Service
+	"help.connector.port",           // 1: Port
+	"help.connector.protocol",       // 2: Protocol
+	"help.connector.secretrequired", // 3: Secret Required
+	"help.connector.secret",         // 4: Secret
+	"help.connector.redirectport",   // 5: Redirect Port
+}
+
+// Add SSL Connector form help keys (by form field index)
+var addSSLConnectorHelpKeysByIndex = []string{
+	"help.connector.service",           // 0: Service
+	"help.connector.port",              // 1: Port
+	"help.connector.protocol",          // 2: Protocol
+	"help.connector.connectiontimeout", // 3: Connection Timeout
+	"help.connector.maxthreads",        // 4: Max Threads
+	"help.connector.sslprotocol",       // 5: SSL Protocol
+	"help.connector.keystorefile",      // 6: Keystore File
+	"help.connector.keystorepass",      // 7: Keystore Password
+	"help.connector.keystoretype",      // 8: Keystore Type
+	"help.connector.clientauth",        // 9: Client Auth
+}
+
 // ConnectorView handles connector configuration UI
 type ConnectorView struct {
 	app           *tview.Application
@@ -770,16 +805,19 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 	var defaultConn server.Connector
 	var protocols []string
 	var title string
+	var helpKeys []string
 
 	switch connType {
 	case connector.ConnectorTypeHTTP:
 		defaultConn = connector.DefaultHTTPConnector()
 		protocols = connector.AvailableHTTPProtocols()
 		title = i18n.T("connector.http.add.title")
+		helpKeys = addHTTPConnectorHelpKeysByIndex
 	case connector.ConnectorTypeAJP:
 		defaultConn = connector.DefaultAJPConnector()
 		protocols = connector.AvailableAJPProtocols()
 		title = i18n.T("connector.ajp.add.title")
+		helpKeys = addAJPConnectorHelpKeysByIndex
 	default:
 		return
 	}
@@ -797,6 +835,27 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 	}
 
 	form := tview.NewForm()
+
+	// Help panel on the right
+	helpPanel := tview.NewTextView().
+		SetDynamicColors(true).
+		SetWordWrap(true)
+	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(helpKeys) {
+			helpPanel.SetText(i18n.T(helpKeys[index]))
+		} else {
+			if connType == connector.ConnectorTypeHTTP {
+				helpPanel.SetText(i18n.T("help.connector.http"))
+			} else {
+				helpPanel.SetText(i18n.T("help.connector.ajp"))
+			}
+		}
+	}
+
 	form.AddDropDown(i18n.T("server.service"), serviceNames, 0, nil)
 	form.AddInputField(i18n.T("connector.port"), strconv.Itoa(defaultConn.Port), 10, acceptDigits, nil)
 	form.AddDropDown(i18n.T("connector.protocol"), protocols, 0, nil)
@@ -860,7 +919,40 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 	})
 
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s ", title)).SetBorderColor(tcell.ColorGreen)
-	v.pages.AddAndSwitchToPage("add-connector", form, true)
+
+	// Initial help
+	updateHelp(0)
+
+	// Handle key events and update help on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			if connType == connector.ConnectorTypeHTTP {
+				v.showHTTPConnectors()
+			} else {
+				v.showAJPConnectors()
+			}
+			return nil
+		}
+		// Update help after navigation
+		go func() {
+			v.app.QueueUpdateDraw(func() {
+				idx, _ := form.GetFocusedItemIndex()
+				if idx != lastFocusedIndex {
+					lastFocusedIndex = idx
+					updateHelp(idx)
+				}
+			})
+		}()
+		return event
+	})
+
+	// Create layout with help panel
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(form, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("add-connector", layout, true)
 	v.app.SetFocus(form)
 }
 
@@ -880,6 +972,23 @@ func (v *ConnectorView) showAddSSLConnector() {
 	}
 
 	form := tview.NewForm()
+
+	// Help panel on the right
+	helpPanel := tview.NewTextView().
+		SetDynamicColors(true).
+		SetWordWrap(true)
+	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(addSSLConnectorHelpKeysByIndex) {
+			helpPanel.SetText(i18n.T(addSSLConnectorHelpKeysByIndex[index]))
+		} else {
+			helpPanel.SetText(i18n.T("help.connector.https"))
+		}
+	}
+
 	form.AddDropDown(i18n.T("server.service"), serviceNames, 0, nil)
 	form.AddInputField(i18n.T("connector.port"), strconv.Itoa(defaultConn.Port), 10, acceptDigits, nil)
 	form.AddDropDown(i18n.T("connector.protocol"), connector.AvailableHTTPProtocols(), 0, nil)
@@ -928,7 +1037,36 @@ func (v *ConnectorView) showAddSSLConnector() {
 	})
 
 	form.SetBorder(true).SetTitle(" " + i18n.T("connector.ssl.add.title") + " ").SetBorderColor(tcell.ColorGreen)
-	v.pages.AddAndSwitchToPage("add-ssl-connector", form, true)
+
+	// Initial help
+	updateHelp(0)
+
+	// Handle key events and update help on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showSSLConnectors()
+			return nil
+		}
+		// Update help after navigation
+		go func() {
+			v.app.QueueUpdateDraw(func() {
+				idx, _ := form.GetFocusedItemIndex()
+				if idx != lastFocusedIndex {
+					lastFocusedIndex = idx
+					updateHelp(idx)
+				}
+			})
+		}()
+		return event
+	})
+
+	// Create layout with help panel
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(form, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("add-ssl-connector", layout, true)
 	v.app.SetFocus(form)
 }
 
