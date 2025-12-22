@@ -254,9 +254,13 @@ func (v *ConnectorView) showConnectorDetail(serviceIndex, connectorIndex int) {
 
 	form := tview.NewForm()
 	preview := NewPreviewPanel()
+	formReady := false
 
 	// Function to update preview based on current form values
 	updatePreview := func() {
+		if !formReady {
+			return
+		}
 		tempConn := server.Connector{
 			Port:              conn.Port,
 			Protocol:          conn.Protocol,
@@ -322,6 +326,9 @@ func (v *ConnectorView) showConnectorDetail(serviceIndex, connectorIndex int) {
 	form.AddInputField(i18n.T("connector.executor.optional"), conn.Executor, 30, nil, func(text string) {
 		updatePreview()
 	})
+
+	formReady = true
+	updatePreview()
 
 	form.AddButton(i18n.T("common.save.short"), func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
@@ -389,9 +396,13 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 
 	form := tview.NewForm()
 	preview := NewPreviewPanel()
+	formReady := false
 
 	// Function to update preview
 	updatePreview := func() {
+		if !formReady {
+			return
+		}
 		tempConn := server.Connector{
 			Port:           conn.Port,
 			Protocol:       conn.Protocol,
@@ -443,6 +454,9 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 	form.AddInputField(i18n.T("connector.executor.optional"), conn.Executor, 30, nil, func(text string) {
 		updatePreview()
 	})
+
+	formReady = true
+	updatePreview()
 
 	form.AddButton(i18n.T("common.save.short"), func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
@@ -509,9 +523,13 @@ func (v *ConnectorView) showSSLConnectorDetail(serviceIndex, connectorIndex int)
 
 	form := tview.NewForm()
 	preview := NewPreviewPanel()
+	formReady := false
 
 	// Function to update preview
 	updatePreview := func() {
+		if !formReady {
+			return
+		}
 		tempConn := server.Connector{
 			Port:              conn.Port,
 			Protocol:          conn.Protocol,
@@ -582,6 +600,9 @@ func (v *ConnectorView) showSSLConnectorDetail(serviceIndex, connectorIndex int)
 	form.AddDropDown(i18n.T("connector.clientauth"), connector.ClientAuthOptions(), indexOf(conn.ClientAuth, connector.ClientAuthOptions()), func(text string, index int) {
 		updatePreview()
 	})
+
+	formReady = true
+	updatePreview()
 
 	form.AddButton(i18n.T("common.save.short"), func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
