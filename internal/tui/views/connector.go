@@ -13,14 +13,24 @@ import (
 
 // HTTP Connector property help keys (by form field index)
 var httpConnectorHelpKeysByIndex = []string{
-	"help.connector.port",            // 0: Port
-	"help.connector.protocol",        // 1: Protocol
+	"help.connector.port",              // 0: Port
+	"help.connector.protocol",          // 1: Protocol
 	"help.connector.connectiontimeout", // 2: Connection Timeout
-	"help.connector.redirectport",    // 3: Redirect Port
-	"help.connector.maxthreads",      // 4: Max Threads
-	"help.connector.minsparethreads", // 5: Min Spare Threads
-	"help.connector.acceptcount",     // 6: Accept Count
-	"help.connector.executor",        // 7: Executor
+	"help.connector.redirectport",      // 3: Redirect Port
+	"help.connector.maxthreads",        // 4: Max Threads
+	"help.connector.minsparethreads",   // 5: Min Spare Threads
+	"help.connector.acceptcount",       // 6: Accept Count
+	"help.connector.executor",          // 7: Executor
+}
+
+// AJP Connector property help keys (by form field index)
+var ajpConnectorHelpKeysByIndex = []string{
+	"help.connector.port",           // 0: Port
+	"help.connector.protocol",       // 1: Protocol
+	"help.connector.redirectport",   // 2: Redirect Port
+	"help.connector.secretrequired", // 3: Secret Required
+	"help.connector.secret",         // 4: Secret
+	"help.connector.executor",       // 5: Executor
 }
 
 // ConnectorView handles connector configuration UI
@@ -451,6 +461,22 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 	preview := NewPreviewPanel()
 	formReady := false
 
+	// Help panel on the right
+	helpPanel := tview.NewTextView().
+		SetDynamicColors(true).
+		SetWordWrap(true)
+	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(ajpConnectorHelpKeysByIndex) {
+			helpPanel.SetText(i18n.T(ajpConnectorHelpKeysByIndex[index]))
+		} else {
+			helpPanel.SetText(i18n.T("help.connector.ajp"))
+		}
+	}
+
 	// Function to update preview
 	updatePreview := func() {
 		if !formReady {
@@ -552,14 +578,39 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s - %s %d ", i18n.T("connector.ajp"), i18n.T("connector.port"), conn.Port)).SetBorderColor(tcell.ColorDarkCyan)
 
-	// Initial preview
+	// Initial preview and help
 	updatePreview()
+	updateHelp(0)
 
-	// Create layout with form on top and preview on bottom
-	layout := tview.NewFlex().
+	// Handle key events and update help on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showAJPConnectors()
+			return nil
+		}
+		// Update help after navigation
+		go func() {
+			v.app.QueueUpdateDraw(func() {
+				idx, _ := form.GetFocusedItemIndex()
+				if idx != lastFocusedIndex {
+					lastFocusedIndex = idx
+					updateHelp(idx)
+				}
+			})
+		}()
+		return event
+	})
+
+	// Create layout: left side (form + preview), right side (help)
+	leftPane := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
 		AddItem(preview, 0, 1, false)
+
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(leftPane, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("ajp-connector-detail", layout, true)
 	v.app.SetFocus(form)

@@ -1057,6 +1057,35 @@ Reference to a shared thread pool.
 <Executor name="tomcatThreadPool"
   maxThreads="200" minSpareThreads="10"/>[-]`,
 
+		"help.connector.secretrequired": `[::b]Secret Required[::-]
+Enable secret-based authentication for AJP connections.
+
+[yellow]Default:[-] true (Tomcat 9.0.31+)
+
+[green]Purpose:[-]
+• Prevents unauthorized access to AJP port
+• Mitigates Ghostcat vulnerability (CVE-2020-1938)
+• Requires matching secret on both sides
+
+[red]Security:[-]
+• Always enable in production
+• Use strong, random secret values
+• Never expose AJP port to untrusted networks`,
+
+		"help.connector.secret": `[::b]Secret[::-]
+Shared secret for AJP connector authentication.
+
+[yellow]Requirements:[-]
+• Must match Apache mod_proxy_ajp secret
+• Use strong, random value (32+ chars)
+• Keep confidential
+
+[green]Configuration:[-]
+• Tomcat: secret="yourSecretValue"
+• Apache: ProxyPass ajp://host:8009 secret=yourSecretValue
+
+[gray]Generate with: openssl rand -base64 32[-]`,
+
 		// Security Help
 		"help.security.realm": `[::b]Realm[::-]
 A Realm connects Tomcat to a user/role database for authentication.
@@ -4020,6 +4049,35 @@ maxThreads ≈ (피크_동시_사용자 × 평균_응답_시간_초)
 <Executor name="tomcatThreadPool"
   maxThreads="200" minSpareThreads="10"/>[-]`,
 
+		"help.connector.secretrequired": `[::b]Secret Required[::-]
+AJP 연결에 대한 비밀 기반 인증을 활성화합니다.
+
+[yellow]기본값:[-] true (Tomcat 9.0.31+)
+
+[green]목적:[-]
+• AJP 포트에 대한 무단 접근 방지
+• Ghostcat 취약점 완화 (CVE-2020-1938)
+• 양쪽에서 일치하는 비밀 필요
+
+[red]보안:[-]
+• 운영 환경에서는 항상 활성화
+• 강력하고 무작위한 비밀 값 사용
+• AJP 포트를 신뢰할 수 없는 네트워크에 노출하지 않음`,
+
+		"help.connector.secret": `[::b]Secret[::-]
+AJP 커넥터 인증을 위한 공유 비밀입니다.
+
+[yellow]요구사항:[-]
+• Apache mod_proxy_ajp 비밀과 일치해야 함
+• 강력하고 무작위한 값 사용 (32자 이상)
+• 기밀 유지
+
+[green]설정:[-]
+• Tomcat: secret="yourSecretValue"
+• Apache: ProxyPass ajp://host:8009 secret=yourSecretValue
+
+[gray]생성 명령: openssl rand -base64 32[-]`,
+
 		// 보안 도움말
 		"help.security.realm": `[::b]Realm[::-]
 Realm은 인증을 위해 Tomcat을 사용자/역할 데이터베이스에 연결합니다.
@@ -6378,6 +6436,35 @@ maxThreads ≈ (ピーク同時ユーザー × 平均応答時間秒)
 [gray]server.xmlでExecutorを定義:
 <Executor name="tomcatThreadPool"
   maxThreads="200" minSpareThreads="10"/>[-]`,
+
+		"help.connector.secretrequired": `[::b]Secret Required[::-]
+AJP接続のシークレットベース認証を有効にします。
+
+[yellow]デフォルト:[-] true (Tomcat 9.0.31+)
+
+[green]目的:[-]
+• AJPポートへの不正アクセスを防止
+• Ghostcat脆弱性を軽減 (CVE-2020-1938)
+• 両側で一致するシークレットが必要
+
+[red]セキュリティ:[-]
+• 本番環境では常に有効化
+• 強力でランダムなシークレット値を使用
+• 信頼できないネットワークにAJPポートを公開しない`,
+
+		"help.connector.secret": `[::b]Secret[::-]
+AJPコネクタ認証用の共有シークレットです。
+
+[yellow]要件:[-]
+• Apache mod_proxy_ajpのシークレットと一致する必要あり
+• 強力でランダムな値を使用 (32文字以上)
+• 機密保持
+
+[green]設定:[-]
+• Tomcat: secret="yourSecretValue"
+• Apache: ProxyPass ajp://host:8009 secret=yourSecretValue
+
+[gray]生成コマンド: openssl rand -base64 32[-]`,
 
 		// セキュリティヘルプ
 		"help.security.realm": `[::b]Realm[::-]
