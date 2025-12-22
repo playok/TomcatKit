@@ -1041,6 +1041,22 @@ Port for automatic HTTPS redirects.
 
 [gray]Example: HTTP on 8080 redirects to HTTPS on 8443[-]`,
 
+		"help.connector.executor": `[::b]Executor (Thread Pool)[::-]
+Reference to a shared thread pool.
+
+[yellow]Usage:[-]
+• Leave empty to use connector's own thread pool
+• Set executor name to share threads across connectors
+
+[green]Benefits:[-]
+• Centralized thread pool management
+• Better resource utilization
+• Easier monitoring and tuning
+
+[gray]Define Executor in server.xml:
+<Executor name="tomcatThreadPool"
+  maxThreads="200" minSpareThreads="10"/>[-]`,
+
 		// Security Help
 		"help.security.realm": `[::b]Realm[::-]
 A Realm connects Tomcat to a user/role database for authentication.
@@ -3988,6 +4004,22 @@ maxThreads ≈ (피크_동시_사용자 × 평균_응답_시간_초)
 
 [gray]예: 8080의 HTTP가 8443의 HTTPS로 리디렉션[-]`,
 
+		"help.connector.executor": `[::b]Executor (스레드 풀)[::-]
+공유 스레드 풀에 대한 참조입니다.
+
+[yellow]사용법:[-]
+• 비워두면 커넥터 자체 스레드 풀 사용
+• Executor 이름을 설정하면 커넥터 간 스레드 공유
+
+[green]장점:[-]
+• 중앙화된 스레드 풀 관리
+• 더 나은 리소스 활용
+• 쉬운 모니터링 및 튜닝
+
+[gray]server.xml에서 Executor 정의:
+<Executor name="tomcatThreadPool"
+  maxThreads="200" minSpareThreads="10"/>[-]`,
+
 		// 보안 도움말
 		"help.security.realm": `[::b]Realm[::-]
 Realm은 인증을 위해 Tomcat을 사용자/역할 데이터베이스에 연결합니다.
@@ -6330,6 +6362,22 @@ maxThreads ≈ (ピーク同時ユーザー × 平均応答時間秒)
 • HTTPSコネクタポートと一致させる必要あり
 
 [gray]例: 8080のHTTPが8443のHTTPSにリダイレクト[-]`,
+
+		"help.connector.executor": `[::b]Executor (スレッドプール)[::-]
+共有スレッドプールへの参照です。
+
+[yellow]使用方法:[-]
+• 空のままでコネクタ独自のスレッドプールを使用
+• Executor名を設定してコネクタ間でスレッドを共有
+
+[green]利点:[-]
+• 集中化されたスレッドプール管理
+• リソースの効率的な活用
+• 監視とチューニングが容易
+
+[gray]server.xmlでExecutorを定義:
+<Executor name="tomcatThreadPool"
+  maxThreads="200" minSpareThreads="10"/>[-]`,
 
 		// セキュリティヘルプ
 		"help.security.realm": `[::b]Realm[::-]
