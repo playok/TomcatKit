@@ -2156,6 +2156,88 @@ Application-wide initialization parameters.
 [yellow]Use Cases:[-]
 Database URLs, feature flags, configuration.`,
 
+		// Servlet Form Help
+		"help.servlet.name": `[::b]Servlet Name[::-]
+Unique identifier for this servlet.
+
+[yellow]Rules:[-]
+• Must be unique within web.xml
+• Used in servlet-mapping references
+• Case-sensitive
+
+[green]Example:[-]
+myServlet, LoginServlet, ApiController`,
+
+		"help.servlet.class": `[::b]Servlet Class[::-]
+Fully qualified Java class name of the servlet.
+
+[yellow]Requirements:[-]
+• Must extend HttpServlet or implement Servlet
+• Must be in the classpath (WEB-INF/classes or JAR)
+
+[green]Examples:[-]
+• com.example.MyServlet
+• org.springframework.web.servlet.DispatcherServlet`,
+
+		"help.servlet.jsp": `[::b]JSP File[::-]
+Path to a JSP file to use as the servlet.
+
+[yellow]Note:[-]
+• Either servlet-class OR jsp-file, not both
+• Path relative to web app root
+• Starts with /
+
+[green]Example:[-]
+/WEB-INF/views/hello.jsp`,
+
+		"help.servlet.loadonstartup": `[::b]Load On Startup[::-]
+Order to load this servlet at application startup.
+
+[yellow]Values:[-]
+• Empty: Load on first request (lazy)
+• 0 or positive: Load at startup
+• Lower numbers load first
+
+[green]Recommendation:[-]
+• Set for frequently-used servlets
+• Spring DispatcherServlet: typically 1`,
+
+		"help.servlet.async": `[::b]Async Supported[::-]
+Enable asynchronous request processing.
+
+[yellow]When to Enable:[-]
+• Long-running operations
+• WebSocket endpoints
+• Server-Sent Events (SSE)
+
+[green]Requirements:[-]
+• All filters in chain must also support async
+• Use AsyncContext for async operations`,
+
+		"help.servlet.initparams": `[::b]Init Parameters[::-]
+Servlet initialization parameters.
+
+[yellow]Format:[-]
+paramName=paramValue (one per line)
+
+[green]Access in Servlet:[-]
+getServletConfig().getInitParameter("name")
+
+[gray]Example:
+configFile=/WEB-INF/config.xml
+debug=true[-]`,
+
+		"help.servlet.urlpatterns": `[::b]URL Patterns[::-]
+URL patterns that map to this servlet.
+
+[yellow]Pattern Types:[-]
+• Exact: /api/users
+• Path: /api/*
+• Extension: *.do, *.action
+• Default: / (catch-all)
+
+[gray]Enter one pattern per line[-]`,
+
 		// Additional common keys
 		"help.security.users": `[::b]Users & Roles[::-]
 Manage authentication users in tomcat-users.xml.
@@ -4644,6 +4726,88 @@ HTTP 세션 동작을 구성합니다.
   </auth-constraint>
 </security-constraint>`,
 
+		// 서블릿 폼 도움말
+		"help.servlet.name": `[::b]서블릿 이름[::-]
+이 서블릿의 고유 식별자입니다.
+
+[yellow]규칙:[-]
+• web.xml 내에서 고유해야 함
+• servlet-mapping 참조에 사용됨
+• 대소문자 구분
+
+[green]예:[-]
+myServlet, LoginServlet, ApiController`,
+
+		"help.servlet.class": `[::b]서블릿 클래스[::-]
+서블릿의 정규화된 Java 클래스 이름입니다.
+
+[yellow]요구사항:[-]
+• HttpServlet을 상속하거나 Servlet 구현해야 함
+• 클래스패스에 있어야 함 (WEB-INF/classes 또는 JAR)
+
+[green]예:[-]
+• com.example.MyServlet
+• org.springframework.web.servlet.DispatcherServlet`,
+
+		"help.servlet.jsp": `[::b]JSP 파일[::-]
+서블릿으로 사용할 JSP 파일 경로입니다.
+
+[yellow]참고:[-]
+• servlet-class 또는 jsp-file 중 하나만 사용
+• 웹 앱 루트 기준 상대 경로
+• /로 시작
+
+[green]예:[-]
+/WEB-INF/views/hello.jsp`,
+
+		"help.servlet.loadonstartup": `[::b]시작 시 로드[::-]
+애플리케이션 시작 시 이 서블릿을 로드하는 순서입니다.
+
+[yellow]값:[-]
+• 비어있음: 첫 요청 시 로드 (지연)
+• 0 또는 양수: 시작 시 로드
+• 낮은 숫자가 먼저 로드
+
+[green]권장사항:[-]
+• 자주 사용되는 서블릿에 설정
+• Spring DispatcherServlet: 일반적으로 1`,
+
+		"help.servlet.async": `[::b]비동기 지원[::-]
+비동기 요청 처리를 활성화합니다.
+
+[yellow]활성화 시기:[-]
+• 장기 실행 작업
+• WebSocket 엔드포인트
+• Server-Sent Events (SSE)
+
+[green]요구사항:[-]
+• 체인의 모든 필터도 비동기 지원해야 함
+• 비동기 작업에 AsyncContext 사용`,
+
+		"help.servlet.initparams": `[::b]초기화 파라미터[::-]
+서블릿 초기화 파라미터입니다.
+
+[yellow]형식:[-]
+paramName=paramValue (한 줄에 하나씩)
+
+[green]서블릿에서 접근:[-]
+getServletConfig().getInitParameter("name")
+
+[gray]예:
+configFile=/WEB-INF/config.xml
+debug=true[-]`,
+
+		"help.servlet.urlpatterns": `[::b]URL 패턴[::-]
+이 서블릿에 매핑되는 URL 패턴입니다.
+
+[yellow]패턴 유형:[-]
+• 정확: /api/users
+• 경로: /api/*
+• 확장자: *.do, *.action
+• 기본: / (전체 처리)
+
+[gray]한 줄에 하나씩 입력[-]`,
+
 		// DataSource 속성 도움말
 		"help.ds.name": `[yellow]JNDI 이름[white]
 
@@ -7105,6 +7269,88 @@ HTTPセッションの動作を構成します。
     <role-name>admin</role-name>
   </auth-constraint>
 </security-constraint>`,
+
+		// サーブレットフォームヘルプ
+		"help.servlet.name": `[::b]サーブレット名[::-]
+このサーブレットの一意の識別子です。
+
+[yellow]ルール:[-]
+• web.xml内で一意である必要あり
+• servlet-mapping参照に使用
+• 大文字小文字を区別
+
+[green]例:[-]
+myServlet, LoginServlet, ApiController`,
+
+		"help.servlet.class": `[::b]サーブレットクラス[::-]
+サーブレットの完全修飾Javaクラス名です。
+
+[yellow]要件:[-]
+• HttpServletを継承するかServletを実装
+• クラスパスに存在 (WEB-INF/classesまたはJAR)
+
+[green]例:[-]
+• com.example.MyServlet
+• org.springframework.web.servlet.DispatcherServlet`,
+
+		"help.servlet.jsp": `[::b]JSPファイル[::-]
+サーブレットとして使用するJSPファイルのパスです。
+
+[yellow]注意:[-]
+• servlet-classまたはjsp-fileのいずれか
+• Webアプリルートからの相対パス
+• /で開始
+
+[green]例:[-]
+/WEB-INF/views/hello.jsp`,
+
+		"help.servlet.loadonstartup": `[::b]起動時ロード[::-]
+アプリケーション起動時にこのサーブレットをロードする順序です。
+
+[yellow]値:[-]
+• 空: 最初のリクエスト時にロード (遅延)
+• 0または正: 起動時にロード
+• 小さい数字が先にロード
+
+[green]推奨事項:[-]
+• 頻繁に使用するサーブレットに設定
+• Spring DispatcherServlet: 通常1`,
+
+		"help.servlet.async": `[::b]非同期サポート[::-]
+非同期リクエスト処理を有効にします。
+
+[yellow]有効化するケース:[-]
+• 長時間実行操作
+• WebSocketエンドポイント
+• Server-Sent Events (SSE)
+
+[green]要件:[-]
+• チェーン内のすべてのフィルターも非同期サポート必須
+• 非同期操作にAsyncContextを使用`,
+
+		"help.servlet.initparams": `[::b]初期化パラメータ[::-]
+サーブレット初期化パラメータです。
+
+[yellow]形式:[-]
+paramName=paramValue (1行に1つ)
+
+[green]サーブレットでのアクセス:[-]
+getServletConfig().getInitParameter("name")
+
+[gray]例:
+configFile=/WEB-INF/config.xml
+debug=true[-]`,
+
+		"help.servlet.urlpatterns": `[::b]URLパターン[::-]
+このサーブレットにマッピングされるURLパターンです。
+
+[yellow]パターンタイプ:[-]
+• 正確: /api/users
+• パス: /api/*
+• 拡張子: *.do, *.action
+• デフォルト: / (キャッチオール)
+
+[gray]1行に1パターンを入力[-]`,
 
 		// DataSource プロパティヘルプ
 		"help.ds.name": `[yellow]JNDI名[white]

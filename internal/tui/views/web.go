@@ -11,6 +11,17 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Servlet form help keys (by form field index)
+var servletHelpKeysByIndex = []string{
+	"help.servlet.name",         // 0: Servlet Name
+	"help.servlet.class",        // 1: Servlet Class
+	"help.servlet.jsp",          // 2: JSP File
+	"help.servlet.loadonstartup", // 3: Load On Startup
+	"help.servlet.async",        // 4: Async Supported
+	"help.servlet.initparams",   // 5: Init Params
+	"help.servlet.urlpatterns",  // 6: URL Patterns
+}
+
 // WebView provides TUI for web.xml configuration
 type WebView struct {
 	app           *tview.Application
@@ -235,6 +246,22 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 
 	form := tview.NewForm()
 
+	// Help panel on the right
+	helpPanel := tview.NewTextView().
+		SetDynamicColors(true).
+		SetWordWrap(true)
+	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(servletHelpKeysByIndex) {
+			helpPanel.SetText(i18n.T(servletHelpKeysByIndex[index]))
+		} else {
+			helpPanel.SetText(i18n.T("help.web.servlets"))
+		}
+	}
+
 	form.AddInputField(i18n.T("web.servlet.name"), s.ServletName, 30, nil, func(text string) {
 		s.ServletName = text
 	})
@@ -347,15 +374,34 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 	}
 	form.SetBorder(true).SetTitle(title)
 
+	// Initial help
+	updateHelp(0)
+
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showServletList()
 			return nil
 		}
+		// Update help after navigation
+		go func() {
+			v.app.QueueUpdateDraw(func() {
+				idx, _ := form.GetFocusedItemIndex()
+				if idx != lastFocusedIndex {
+					lastFocusedIndex = idx
+					updateHelp(idx)
+				}
+			})
+		}()
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("servlet-form", form, true)
+	// Create layout with help panel
+	layout := tview.NewFlex().
+		SetDirection(tview.FlexColumn).
+		AddItem(form, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("servlet-form", layout, true)
 }
 
 // showFilterList displays the filter list
