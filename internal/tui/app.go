@@ -208,16 +208,9 @@ func (a *App) setupUI() {
 
 	a.pages.AddPage("main", mainLayout, true, true)
 
-	// Setup global key handlers
+	// Setup global key handlers (F2 for language selection only)
+	// ESC key is handled by individual views for hierarchical navigation
 	a.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyEscape {
-			currentPage, _ := a.pages.GetFrontPage()
-			if currentPage != "main" && currentPage != "lang-selector" {
-				a.pages.SwitchToPage("main")
-				a.app.SetFocus(a.mainMenu)
-				return nil
-			}
-		}
 		// F2 key for language selection
 		if event.Key() == tcell.KeyF2 {
 			a.showLanguageSelector()
@@ -420,6 +413,14 @@ func (a *App) showInstanceSelector() {
 	})
 
 	list.SetBorder(true).SetTitle(" " + i18n.T("instance.title") + " ").SetBorderColor(tcell.ColorGreen)
+	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			a.pages.SwitchToPage("main")
+			a.app.SetFocus(a.mainMenu)
+			return nil
+		}
+		return event
+	})
 
 	a.pages.AddAndSwitchToPage("instance-selector", list, true)
 	a.app.SetFocus(list)
@@ -484,6 +485,13 @@ func (a *App) showManualPathInput() {
 	})
 
 	form.SetBorder(true).SetTitle(" " + i18n.T("instance.path.title") + " ").SetBorderColor(tcell.ColorGreen)
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			a.showInstanceSelector()
+			return nil
+		}
+		return event
+	})
 
 	// Add help text
 	helpText := tview.NewTextView().
