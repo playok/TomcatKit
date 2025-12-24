@@ -109,7 +109,7 @@ func (v *ClusterView) showMainMenu() {
 	}
 
 	menu.AddItem("", "", 0, nil)
-	menu.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 0, func() {
+	menu.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 0, func() {
 		v.onReturn()
 	})
 
@@ -220,7 +220,7 @@ func (v *ClusterView) showClusterSettings() {
 	form.AddInputField("Channel Start Options", cluster.ChannelStartOptions, 10, nil, nil)
 	form.AddCheckbox("Notify Lifecycle Listener On Failure", cluster.NotifyLifecycleListenerOnFailure, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		cluster.ChannelSendOptions = form.GetFormItemByLabel("Channel Send Options").(*tview.InputField).GetText()
 		cluster.ChannelStartOptions = form.GetFormItemByLabel("Channel Start Options").(*tview.InputField).GetText()
 		cluster.NotifyLifecycleListenerOnFailure = form.GetFormItemByLabel("Notify Lifecycle Listener On Failure").(*tview.Checkbox).IsChecked()
@@ -233,10 +233,11 @@ func (v *ClusterView) showClusterSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Cluster Settings ").SetBorderColor(tcell.ColorBlue)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -283,7 +284,7 @@ func (v *ClusterView) showManagerSettings() {
 	form.AddCheckbox("Send All Sessions", cluster.Manager.SendAllSessions, nil)
 	form.AddInputField("Send All Sessions Size", strconv.Itoa(cluster.Manager.SendAllSessionsSize), 10, nil, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		idx, _ := form.GetFormItemByLabel("Manager Type").(*tview.DropDown).GetCurrentOption()
 		cluster.Manager.ClassName = managerTypes[idx]
 		cluster.Manager.ExpireSessionsOnShutdown = form.GetFormItemByLabel("Expire Sessions On Shutdown").(*tview.Checkbox).IsChecked()
@@ -300,10 +301,11 @@ func (v *ClusterView) showManagerSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Session Manager ").SetBorderColor(tcell.ColorGreen)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -347,7 +349,7 @@ func (v *ClusterView) showMembershipSettings() {
 	form.AddInputField("Recovery Sleep Time (ms)", strconv.Itoa(m.RecoverySleepTime), 10, nil, nil)
 	form.AddCheckbox("Local Loopback Disabled", m.LocalLoopbackDisabled, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		m.Address = form.GetFormItemByLabel("Multicast Address").(*tview.InputField).GetText()
 		m.Port, _ = strconv.Atoi(form.GetFormItemByLabel("Multicast Port").(*tview.InputField).GetText())
 		m.Frequency, _ = strconv.Atoi(form.GetFormItemByLabel("Frequency (ms)").(*tview.InputField).GetText())
@@ -366,10 +368,11 @@ func (v *ClusterView) showMembershipSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Membership (Multicast) ").SetBorderColor(tcell.ColorYellow)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -421,7 +424,7 @@ func (v *ClusterView) showReceiverSettings() {
 	form.AddInputField("TX Buffer Size", strconv.Itoa(r.TxBufSize), 10, nil, nil)
 	form.AddInputField("Timeout (ms)", strconv.Itoa(r.Timeout), 10, nil, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		idx, _ := form.GetFormItemByLabel("Receiver Type").(*tview.DropDown).GetCurrentOption()
 		if idx == 0 {
 			r.ClassName = server.ReceiverNioReceiver
@@ -446,10 +449,11 @@ func (v *ClusterView) showReceiverSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Receiver ").SetBorderColor(tcell.ColorPurple)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -499,7 +503,7 @@ func (v *ClusterView) showSenderSettings() {
 	form.AddCheckbox("SO Keep Alive", t.SoKeepAlive, nil)
 	form.AddCheckbox("Throw On Failed Ack", t.ThrowOnFailedAck, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		t.RxBufSize, _ = strconv.Atoi(form.GetFormItemByLabel("RX Buffer Size").(*tview.InputField).GetText())
 		t.TxBufSize, _ = strconv.Atoi(form.GetFormItemByLabel("TX Buffer Size").(*tview.InputField).GetText())
 		t.DirectBuffer = form.GetFormItemByLabel("Direct Buffer").(*tview.Checkbox).IsChecked()
@@ -519,10 +523,11 @@ func (v *ClusterView) showSenderSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Sender / Transport ").SetBorderColor(tcell.ColorBlue)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -558,7 +563,7 @@ func (v *ClusterView) showInterceptorList() {
 	list.AddItem("[green]► Add Interceptor[-]", "Add new interceptor", 'a', func() {
 		v.showInterceptorTypeSelector()
 	})
-	list.AddItem("[red]Back[-]", "Return to cluster menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to cluster menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -590,7 +595,7 @@ func (v *ClusterView) showInterceptorTypeSelector() {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to interceptor list", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to interceptor list", 0, func() {
 		v.showInterceptorList()
 	})
 
@@ -637,7 +642,7 @@ func (v *ClusterView) showInterceptorForm(interceptor *server.Interceptor, isNew
 		form.AddInputField("Encryption Key File", interceptor.EncryptionKeyFile, 50, nil, nil)
 	}
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		// Extract values based on type
 		switch interceptor.ClassName {
 		case server.InterceptorTcpFailureDetector:
@@ -677,12 +682,12 @@ func (v *ClusterView) showInterceptorForm(interceptor *server.Interceptor, isNew
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDeleteInterceptor(interceptor)
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showInterceptorList()
 	})
 
@@ -690,6 +695,7 @@ func (v *ClusterView) showInterceptorForm(interceptor *server.Interceptor, isNew
 	if isNew {
 		title = fmt.Sprintf(" Add %s ", name)
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorGreen)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -757,7 +763,7 @@ func (v *ClusterView) showDeployerSettings() {
 	form.AddInputField("Watch Dir", d.WatchDir, 50, nil, nil)
 	form.AddInputField("Process Deploy Frequency", strconv.Itoa(d.ProcessDeployFrequency), 10, nil, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		d.WatchEnabled = form.GetFormItemByLabel("Watch Enabled").(*tview.Checkbox).IsChecked()
 		d.TempDir = form.GetFormItemByLabel("Temp Dir").(*tview.InputField).GetText()
 		d.DeployDir = form.GetFormItemByLabel("Deploy Dir").(*tview.InputField).GetText()
@@ -772,7 +778,7 @@ func (v *ClusterView) showDeployerSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("cluster.deployer.remove"), func() {
+	form.AddButton("[white:red]"+i18n.T("cluster.deployer.remove")+"[-:-]", func() {
 		cluster.Deployer = nil
 		if err := v.configService.Save(); err != nil {
 			v.setStatus(fmt.Sprintf("[red]Failed to save: %v[-]", err))
@@ -782,10 +788,11 @@ func (v *ClusterView) showDeployerSettings() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Farm War Deployer ").SetBorderColor(tcell.ColorYellow)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {

@@ -547,3 +547,150 @@ func GenerateResourceLinkXML(link *jndi.ResourceLink) string {
 
 	return string(output)
 }
+
+// GenerateContextSettingsXML generates XML preview for context settings (from context.xml)
+func GenerateContextSettingsXML(ctx *jndi.Context) string {
+	type ContextSettingsPreview struct {
+		XMLName             xml.Name `xml:"Context"`
+		Reloadable          bool     `xml:"reloadable,attr,omitempty"`
+		CrossContext        bool     `xml:"crossContext,attr,omitempty"`
+		Privileged          bool     `xml:"privileged,attr,omitempty"`
+		Cookies             string   `xml:"cookies,attr,omitempty"`
+		UseHttpOnly         string   `xml:"useHttpOnly,attr,omitempty"`
+		SessionCookieName   string   `xml:"sessionCookieName,attr,omitempty"`
+		CachingAllowed      string   `xml:"cachingAllowed,attr,omitempty"`
+		CacheMaxSize        int      `xml:"cacheMaxSize,attr,omitempty"`
+		AntiResourceLocking string   `xml:"antiResourceLocking,attr,omitempty"`
+		SwallowOutput       string   `xml:"swallowOutput,attr,omitempty"`
+	}
+
+	preview := ContextSettingsPreview{
+		Reloadable:          ctx.Reloadable,
+		CrossContext:        ctx.CrossContext,
+		Privileged:          ctx.Privileged,
+		Cookies:             ctx.Cookies,
+		UseHttpOnly:         ctx.UseHttpOnly,
+		SessionCookieName:   ctx.SessionCookieName,
+		CachingAllowed:      ctx.CachingAllowed,
+		CacheMaxSize:        ctx.CacheMaxSize,
+		AntiResourceLocking: ctx.AntiResourceLocking,
+		SwallowOutput:       ctx.SwallowOutput,
+	}
+
+	output, err := xml.MarshalIndent(preview, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateContextParameterXML generates XML preview for a context parameter
+func GenerateContextParameterXML(param *jndi.ContextParameter) string {
+	type ParameterPreview struct {
+		XMLName     xml.Name `xml:"Parameter"`
+		Name        string   `xml:"name,attr"`
+		Value       string   `xml:"value,attr"`
+		Override    bool     `xml:"override,attr,omitempty"`
+		Description string   `xml:"description,attr,omitempty"`
+	}
+
+	preview := ParameterPreview{
+		Name:        param.Name,
+		Value:       param.Value,
+		Override:    param.Override,
+		Description: param.Description,
+	}
+
+	output, err := xml.MarshalIndent(preview, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateWatchedResourceXML generates XML preview for a watched resource
+func GenerateWatchedResourceXML(resource string) string {
+	type WatchedResourcePreview struct {
+		XMLName xml.Name `xml:"WatchedResource"`
+		Value   string   `xml:",chardata"`
+	}
+
+	preview := WatchedResourcePreview{
+		Value: resource,
+	}
+
+	output, err := xml.MarshalIndent(preview, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateContextManagerXML generates XML preview for a context manager
+func GenerateContextManagerXML(mgr *jndi.ContextManager) string {
+	output, err := xml.MarshalIndent(mgr, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateCookieProcessorXML generates XML preview for a cookie processor
+func GenerateCookieProcessorXML(processor *jndi.CookieProcessor) string {
+	output, err := xml.MarshalIndent(processor, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateJarScannerXML generates XML preview for a jar scanner
+func GenerateJarScannerXML(scanner *jndi.JarScanner) string {
+	output, err := xml.MarshalIndent(scanner, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+
+	return string(output)
+}
+
+// GenerateServletXML generates XML preview for a servlet
+func GenerateServletXML(servlet interface{}) string {
+	output, err := xml.MarshalIndent(servlet, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+	return string(output)
+}
+
+// GenerateFilterXML generates XML preview for a filter
+func GenerateFilterXML(filter interface{}) string {
+	output, err := xml.MarshalIndent(filter, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+	return string(output)
+}
+
+// GenerateSessionConfigXML generates XML preview for session configuration
+func GenerateSessionConfigXML(sessionConfig interface{}) string {
+	output, err := xml.MarshalIndent(sessionConfig, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+	return string(output)
+}
+
+// GenerateSecurityConstraintXML generates XML preview for a security constraint
+func GenerateSecurityConstraintXML(constraint interface{}) string {
+	output, err := xml.MarshalIndent(constraint, "", "    ")
+	if err != nil {
+		return fmt.Sprintf("Error generating preview: %v", err)
+	}
+	return string(output)
+}

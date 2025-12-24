@@ -137,7 +137,7 @@ func (v *ConnectorView) Show() {
 		func() { v.showExecutors() },
 	)
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', v.onBack)
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', v.onBack)
 
 	// Update help panel when selection changes
 	list.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -218,7 +218,7 @@ func (v *ConnectorView) showHTTPConnectors() {
 		v.showAddConnector(connector.ConnectorTypeHTTP)
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("connector.returnmenu"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("connector.returnmenu"), 'b', func() {
 		v.Show()
 	})
 
@@ -255,7 +255,7 @@ func (v *ConnectorView) showAJPConnectors() {
 		v.showAddConnector(connector.ConnectorTypeAJP)
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("connector.returnmenu"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("connector.returnmenu"), 'b', func() {
 		v.Show()
 	})
 
@@ -291,7 +291,7 @@ func (v *ConnectorView) showSSLConnectors() {
 		v.showAddSSLConnector()
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("connector.returnmenu"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("connector.returnmenu"), 'b', func() {
 		v.Show()
 	})
 
@@ -403,7 +403,7 @@ func (v *ConnectorView) showConnectorDetail(serviceIndex, connectorIndex int) {
 	formReady = true
 	updatePreview()
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
 		_, protocol := form.GetFormItem(1).(*tview.DropDown).GetCurrentOption()
 		conn.Protocol = protocol
@@ -424,7 +424,7 @@ func (v *ConnectorView) showConnectorDetail(serviceIndex, connectorIndex int) {
 		v.showHTTPConnectors()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("connector.delete.title"), fmt.Sprintf(i18n.T("connector.delete.confirm"), conn.Port), func(confirmed bool) {
 			if confirmed {
 				svc.Connectors = append(svc.Connectors[:connectorIndex], svc.Connectors[connectorIndex+1:]...)
@@ -439,10 +439,11 @@ func (v *ConnectorView) showConnectorDetail(serviceIndex, connectorIndex int) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showHTTPConnectors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s - %s %d ", i18n.T("connector.http"), i18n.T("connector.port"), conn.Port)).SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview and help
@@ -572,7 +573,7 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 	formReady = true
 	updatePreview()
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
 		_, protocol := form.GetFormItem(1).(*tview.DropDown).GetCurrentOption()
 		conn.Protocol = protocol
@@ -592,7 +593,7 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 		v.showAJPConnectors()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("connector.delete.title"), fmt.Sprintf(i18n.T("connector.delete.ajp.confirm"), conn.Port), func(confirmed bool) {
 			if confirmed {
 				svc.Connectors = append(svc.Connectors[:connectorIndex], svc.Connectors[connectorIndex+1:]...)
@@ -607,10 +608,11 @@ func (v *ConnectorView) showAJPConnectorDetail(serviceIndex, connectorIndex int)
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showAJPConnectors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s - %s %d ", i18n.T("connector.ajp"), i18n.T("connector.port"), conn.Port)).SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview and help
@@ -743,7 +745,7 @@ func (v *ConnectorView) showSSLConnectorDetail(serviceIndex, connectorIndex int)
 	formReady = true
 	updatePreview()
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		conn.Port, _ = strconv.Atoi(form.GetFormItem(0).(*tview.InputField).GetText())
 		_, protocol := form.GetFormItem(1).(*tview.DropDown).GetCurrentOption()
 		conn.Protocol = protocol
@@ -766,7 +768,7 @@ func (v *ConnectorView) showSSLConnectorDetail(serviceIndex, connectorIndex int)
 		v.showSSLConnectors()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("connector.delete.title"), fmt.Sprintf(i18n.T("connector.delete.ssl.confirm"), conn.Port), func(confirmed bool) {
 			if confirmed {
 				svc.Connectors = append(svc.Connectors[:connectorIndex], svc.Connectors[connectorIndex+1:]...)
@@ -781,10 +783,11 @@ func (v *ConnectorView) showSSLConnectorDetail(serviceIndex, connectorIndex int)
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showSSLConnectors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s - %s %d ", i18n.T("connector.ssl"), i18n.T("connector.port"), conn.Port)).SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview
@@ -871,7 +874,7 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 
 	form.AddInputField(i18n.T("connector.redirect"), strconv.Itoa(defaultConn.RedirectPort), 10, acceptDigits, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		svcIdx, _ := form.GetFormItem(0).(*tview.DropDown).GetCurrentOption()
 		svc := v.configService.GetService(svcIdx)
 		if svc == nil {
@@ -910,7 +913,7 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 		}
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		if connType == connector.ConnectorTypeHTTP {
 			v.showHTTPConnectors()
 		} else {
@@ -918,6 +921,7 @@ func (v *ConnectorView) showAddConnector(connType connector.ConnectorType) {
 		}
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s ", title)).SetBorderColor(tcell.ColorGreen)
 
 	// Initial help
@@ -1002,7 +1006,7 @@ func (v *ConnectorView) showAddSSLConnector() {
 	form.AddDropDown(i18n.T("connector.keystoretype"), connector.KeystoreTypes(), 0, nil)
 	form.AddDropDown(i18n.T("connector.clientauth"), connector.ClientAuthOptions(), 0, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		svcIdx, _ := form.GetFormItem(0).(*tview.DropDown).GetCurrentOption()
 		svc := v.configService.GetService(svcIdx)
 		if svc == nil {
@@ -1032,10 +1036,11 @@ func (v *ConnectorView) showAddSSLConnector() {
 		v.showSSLConnectors()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showSSLConnectors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("connector.ssl.add.title") + " ").SetBorderColor(tcell.ColorGreen)
 
 	// Initial help
@@ -1091,7 +1096,7 @@ func (v *ConnectorView) showExecutors() {
 		v.showAddExecutor()
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("connector.returnmenu"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("connector.returnmenu"), 'b', func() {
 		v.Show()
 	})
 
@@ -1155,7 +1160,7 @@ func (v *ConnectorView) showExecutorDetail(serviceIndex, executorIndex int) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		exec.Name = form.GetFormItem(0).(*tview.InputField).GetText()
 		exec.NamePrefix = form.GetFormItem(1).(*tview.InputField).GetText()
 		exec.MaxThreads, _ = strconv.Atoi(form.GetFormItem(2).(*tview.InputField).GetText())
@@ -1172,7 +1177,7 @@ func (v *ConnectorView) showExecutorDetail(serviceIndex, executorIndex int) {
 		v.showExecutors()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("connector.executor.delete.title"), fmt.Sprintf(i18n.T("connector.executor.delete.confirm"), exec.Name), func(confirmed bool) {
 			if confirmed {
 				svc.Executors = append(svc.Executors[:executorIndex], svc.Executors[executorIndex+1:]...)
@@ -1187,10 +1192,11 @@ func (v *ConnectorView) showExecutorDetail(serviceIndex, executorIndex int) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showExecutors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" %s: %s ", i18n.T("connector.executor"), exec.Name)).SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview
@@ -1227,7 +1233,7 @@ func (v *ConnectorView) showAddExecutor() {
 	form.AddInputField(i18n.T("connector.minthreads"), "25", 10, acceptDigits, nil)
 	form.AddInputField(i18n.T("connector.executor.maxidle"), "60000", 10, acceptDigits, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		svcIdx, _ := form.GetFormItem(0).(*tview.DropDown).GetCurrentOption()
 		svc := v.configService.GetService(svcIdx)
 		if svc == nil {
@@ -1258,10 +1264,11 @@ func (v *ConnectorView) showAddExecutor() {
 		v.showExecutors()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showExecutors()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("connector.executor.add.title") + " ").SetBorderColor(tcell.ColorGreen)
 	v.pages.AddAndSwitchToPage("add-executor", form, true)
 	v.app.SetFocus(form)

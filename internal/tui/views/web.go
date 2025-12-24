@@ -22,6 +22,37 @@ var servletHelpKeysByIndex = []string{
 	"help.servlet.urlpatterns",  // 6: URL Patterns
 }
 
+// Filter form help keys (by form field index)
+var filterHelpKeysByIndex = []string{
+	"help.filter.name",        // 0: Filter Name
+	"help.filter.class",       // 1: Filter Class
+	"help.filter.async",       // 2: Async Supported
+	"help.filter.initparams",  // 3: Init Params
+	"help.filter.urlpatterns", // 4: URL Patterns
+}
+
+// Session config form help keys (by form field index)
+var sessionConfigHelpKeysByIndex = []string{
+	"help.session.timeout",          // 0: Session Timeout
+	"help.session.tracking.cookie",  // 1: Cookie Tracking
+	"help.session.tracking.url",     // 2: URL Tracking
+	"help.session.tracking.ssl",     // 3: SSL Tracking
+	"help.session.cookie.name",      // 4: Cookie Name
+	"help.session.cookie.domain",    // 5: Cookie Domain
+	"help.session.cookie.path",      // 6: Cookie Path
+	"help.session.cookie.httponly",  // 7: HttpOnly
+	"help.session.cookie.secure",    // 8: Secure
+}
+
+// Security constraint form help keys (by form field index)
+var securityConstraintHelpKeysByIndex = []string{
+	"help.securityconstraint.resourcename", // 0: Resource Name
+	"help.securityconstraint.urlpatterns",  // 1: URL Patterns
+	"help.securityconstraint.httpmethods",  // 2: HTTP Methods
+	"help.securityconstraint.roles",        // 3: Roles
+	"help.securityconstraint.transport",    // 4: Transport Guarantee
+}
+
 // WebView provides TUI for web.xml configuration
 type WebView struct {
 	app           *tview.Application
@@ -246,17 +277,24 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 
 	form := tview.NewForm()
 
-	// Help panel on the right
-	helpPanel := tview.NewTextView().
-		SetDynamicColors(true).
-		SetWordWrap(true)
-	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+	// Help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(servletHelpKeysByIndex[0])
+
+	// Preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateServletXML(&s))
+	}
+	updatePreview()
 
 	// Function to update help text based on focused field index
 	lastFocusedIndex := -1
 	updateHelp := func(index int) {
 		if index >= 0 && index < len(servletHelpKeysByIndex) {
-			helpPanel.SetText(i18n.T(servletHelpKeysByIndex[index]))
+			helpPanel.SetHelpKey(servletHelpKeysByIndex[index])
 		} else {
 			helpPanel.SetText(i18n.T("help.web.servlets"))
 		}
@@ -264,23 +302,28 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 
 	form.AddInputField(i18n.T("web.servlet.name"), s.ServletName, 30, nil, func(text string) {
 		s.ServletName = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.servlet.class"), s.ServletClass, 60, nil, func(text string) {
 		s.ServletClass = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.servlet.jsp"), s.JspFile, 40, nil, func(text string) {
 		s.JspFile = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.servlet.loadonstartup"), s.LoadOnStartup, 5, nil, func(text string) {
 		s.LoadOnStartup = text
+		updatePreview()
 	})
 
 	asyncSupported := s.AsyncSupported == "true"
 	form.AddCheckbox(i18n.T("web.servlet.async"), asyncSupported, func(checked bool) {
 		s.AsyncSupported = BoolToString(checked)
+		updatePreview()
 	})
 
 	// Init params as text
@@ -303,6 +346,7 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 				})
 			}
 		}
+		updatePreview()
 	})
 
 	// URL mappings
@@ -315,7 +359,7 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 	}
 	form.AddTextArea(i18n.T("web.servlet.urlpatterns"), mappingsStr, 40, 3, 0, nil)
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if s.ServletName == "" {
 			v.setStatus("Error: " + i18n.T("web.servlet.error.name"))
 			return
@@ -354,7 +398,7 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteServlet(servlet.ServletName); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -364,7 +408,7 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showServletList()
 	})
 
@@ -372,6 +416,7 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.servlet.edit") + ": " + servlet.ServletName + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	// Initial help
@@ -383,22 +428,29 @@ func (v *WebView) showServletForm(servlet *web.Servlet, isNew bool) {
 			return nil
 		}
 		// Update help after navigation
-		go func() {
-			v.app.QueueUpdateDraw(func() {
-				idx, _ := form.GetFocusedItemIndex()
-				if idx != lastFocusedIndex {
-					lastFocusedIndex = idx
-					updateHelp(idx)
-				}
-			})
-		}()
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx != lastFocusedIndex {
+						lastFocusedIndex = idx
+						updateHelp(idx)
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	// Create layout with help panel
-	layout := tview.NewFlex().
-		SetDirection(tview.FlexColumn).
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	layout := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
 		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("servlet-form", layout, true)
@@ -475,17 +527,43 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 
 	form := tview.NewForm()
 
+	// Help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(filterHelpKeysByIndex[0])
+
+	// Preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateFilterXML(&f))
+	}
+	updatePreview()
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(filterHelpKeysByIndex) {
+			helpPanel.SetHelpKey(filterHelpKeysByIndex[index])
+		} else {
+			helpPanel.SetText(i18n.T("help.web.filters"))
+		}
+	}
+
 	form.AddInputField(i18n.T("web.filter.name"), f.FilterName, 30, nil, func(text string) {
 		f.FilterName = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.filter.class"), f.FilterClass, 60, nil, func(text string) {
 		f.FilterClass = text
+		updatePreview()
 	})
 
 	asyncSupported := f.AsyncSupported == "true"
 	form.AddCheckbox(i18n.T("web.filter.async"), asyncSupported, func(checked bool) {
 		f.AsyncSupported = BoolToString(checked)
+		updatePreview()
 	})
 
 	// Init params
@@ -508,6 +586,7 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 				})
 			}
 		}
+		updatePreview()
 	})
 
 	// URL patterns for mapping
@@ -520,7 +599,7 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 	}
 	form.AddTextArea(i18n.T("web.filter.urlpatterns"), mappingsStr, 40, 3, 0, nil)
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if f.FilterName == "" || f.FilterClass == "" {
 			v.setStatus("Error: " + i18n.T("web.filter.error.required"))
 			return
@@ -556,7 +635,7 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteFilter(filter.FilterName); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -566,7 +645,7 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showFilterList()
 	})
 
@@ -574,17 +653,44 @@ func (v *WebView) showFilterForm(filter *web.Filter, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.filter.edit") + ": " + filter.FilterName + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
+
+	// Initial help
+	updateHelp(0)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showFilterList()
 			return nil
 		}
+		// Update help after navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx != lastFocusedIndex {
+						lastFocusedIndex = idx
+						updateHelp(idx)
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("filter-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	layout := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("filter-form", layout, true)
 }
 
 // showListenerList displays the listener list
@@ -646,7 +752,7 @@ func (v *WebView) showListenerForm(listener *web.Listener, isNew bool) {
 		l.Description = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if l.ListenerClass == "" {
 			v.setStatus("Error: " + i18n.T("web.listener.error.class"))
 			return
@@ -663,7 +769,7 @@ func (v *WebView) showListenerForm(listener *web.Listener, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteListener(listener.ListenerClass); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -673,7 +779,7 @@ func (v *WebView) showListenerForm(listener *web.Listener, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showListenerList()
 	})
 
@@ -681,6 +787,7 @@ func (v *WebView) showListenerForm(listener *web.Listener, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.listener.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -708,9 +815,33 @@ func (v *WebView) showSessionConfigForm() {
 
 	form := tview.NewForm()
 
+	// Help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(sessionConfigHelpKeysByIndex[0])
+
+	// Preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateSessionConfigXML(&c))
+	}
+	updatePreview()
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(sessionConfigHelpKeysByIndex) {
+			helpPanel.SetHelpKey(sessionConfigHelpKeysByIndex[index])
+		} else {
+			helpPanel.SetText(i18n.T("help.web.session"))
+		}
+	}
+
 	form.AddInputField(i18n.T("web.session.timeout"), strconv.Itoa(c.SessionTimeout), 10, acceptNumber, func(text string) {
 		if val, err := strconv.Atoi(text); err == nil {
 			c.SessionTimeout = val
+			updatePreview()
 		}
 	})
 
@@ -723,27 +854,54 @@ func (v *WebView) showSessionConfigForm() {
 
 	form.AddCheckbox(i18n.T("web.session.tracking.cookie"), currentModes[web.TrackingCookie], func(checked bool) {
 		currentModes[web.TrackingCookie] = checked
+		// Update tracking modes for preview
+		c.TrackingModes = nil
+		for _, mode := range trackingModes {
+			if currentModes[mode] {
+				c.TrackingModes = append(c.TrackingModes, mode)
+			}
+		}
+		updatePreview()
 	})
 
 	form.AddCheckbox(i18n.T("web.session.tracking.url"), currentModes[web.TrackingURL], func(checked bool) {
 		currentModes[web.TrackingURL] = checked
+		// Update tracking modes for preview
+		c.TrackingModes = nil
+		for _, mode := range trackingModes {
+			if currentModes[mode] {
+				c.TrackingModes = append(c.TrackingModes, mode)
+			}
+		}
+		updatePreview()
 	})
 
 	form.AddCheckbox(i18n.T("web.session.tracking.ssl"), currentModes[web.TrackingSSL], func(checked bool) {
 		currentModes[web.TrackingSSL] = checked
+		// Update tracking modes for preview
+		c.TrackingModes = nil
+		for _, mode := range trackingModes {
+			if currentModes[mode] {
+				c.TrackingModes = append(c.TrackingModes, mode)
+			}
+		}
+		updatePreview()
 	})
 
 	// Cookie config
 	form.AddInputField(i18n.T("web.session.cookie.name"), c.CookieConfig.Name, 20, nil, func(text string) {
 		c.CookieConfig.Name = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.session.cookie.domain"), c.CookieConfig.Domain, 30, nil, func(text string) {
 		c.CookieConfig.Domain = text
+		updatePreview()
 	})
 
 	form.AddInputField(i18n.T("web.session.cookie.path"), c.CookieConfig.Path, 20, nil, func(text string) {
 		c.CookieConfig.Path = text
+		updatePreview()
 	})
 
 	httpOnly := c.CookieConfig.HttpOnly == "true"
@@ -753,6 +911,7 @@ func (v *WebView) showSessionConfigForm() {
 		} else {
 			c.CookieConfig.HttpOnly = ""
 		}
+		updatePreview()
 	})
 
 	secure := c.CookieConfig.Secure == "true"
@@ -762,9 +921,10 @@ func (v *WebView) showSessionConfigForm() {
 		} else {
 			c.CookieConfig.Secure = ""
 		}
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		// Update tracking modes
 		c.TrackingModes = nil
 		for _, mode := range trackingModes {
@@ -778,21 +938,48 @@ func (v *WebView) showSessionConfigForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("web.session.title") + " ")
+
+	// Initial help
+	updateHelp(0)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
 		}
+		// Update help after navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx != lastFocusedIndex {
+						lastFocusedIndex = idx
+						updateHelp(idx)
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("session-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	layout := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("session-form", layout, true)
 }
 
 // showWelcomeFilesForm displays the welcome files form
@@ -804,7 +991,7 @@ func (v *WebView) showWelcomeFilesForm() {
 	filesStr := strings.Join(files, "\n")
 	form.AddTextArea(i18n.T("web.welcomefiles.perline"), filesStr, 40, 6, 0, nil)
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		field := form.GetFormItemByLabel(i18n.T("web.welcomefiles.perline")).(*tview.TextArea)
 		text := field.GetText()
 		var newFiles []string
@@ -819,16 +1006,17 @@ func (v *WebView) showWelcomeFilesForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("web.welcomefiles.adddefaults"), func() {
+	form.AddButton("[white:blue]"+i18n.T("web.welcomefiles.adddefaults")+"[-:-]", func() {
 		v.configService.SetWelcomeFiles([]string{"index.html", "index.htm", "index.jsp"})
 		v.setStatus(i18n.T("web.welcomefiles.defaultadded"))
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("web.welcomefiles.title") + " ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -920,7 +1108,7 @@ func (v *WebView) showErrorPageForm(errorPage *web.ErrorPage, index int, isNew b
 		e.Location = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if e.Location == "" {
 			v.setStatus("Error: " + i18n.T("web.errorpage.error.location"))
 			return
@@ -943,7 +1131,7 @@ func (v *WebView) showErrorPageForm(errorPage *web.ErrorPage, index int, isNew b
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteErrorPage(index); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -953,7 +1141,7 @@ func (v *WebView) showErrorPageForm(errorPage *web.ErrorPage, index int, isNew b
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showErrorPageList()
 	})
 
@@ -961,6 +1149,7 @@ func (v *WebView) showErrorPageForm(errorPage *web.ErrorPage, index int, isNew b
 	if !isNew {
 		title = " " + i18n.T("web.errorpage.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1036,7 +1225,7 @@ func (v *WebView) showMimeMappingForm(mapping *web.MimeMapping, isNew bool) {
 		m.MimeType = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if m.Extension == "" || m.MimeType == "" {
 			v.setStatus("Error: " + i18n.T("web.mime.error.required"))
 			return
@@ -1053,7 +1242,7 @@ func (v *WebView) showMimeMappingForm(mapping *web.MimeMapping, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteMimeMapping(mapping.Extension); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -1063,7 +1252,7 @@ func (v *WebView) showMimeMappingForm(mapping *web.MimeMapping, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMimeMappingList()
 	})
 
@@ -1071,6 +1260,7 @@ func (v *WebView) showMimeMappingForm(mapping *web.MimeMapping, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.mime.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1139,6 +1329,29 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 
 	form := tview.NewForm()
 
+	// Help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(securityConstraintHelpKeysByIndex[0])
+
+	// Preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateSecurityConstraintXML(&c))
+	}
+	updatePreview()
+
+	// Function to update help text based on focused field index
+	lastFocusedIndex := -1
+	updateHelp := func(index int) {
+		if index >= 0 && index < len(securityConstraintHelpKeysByIndex) {
+			helpPanel.SetHelpKey(securityConstraintHelpKeysByIndex[index])
+		} else {
+			helpPanel.SetText(i18n.T("help.web.security"))
+		}
+	}
+
 	// Resource name
 	resourceName := ""
 	if len(c.WebResourceCollections) > 0 {
@@ -1149,6 +1362,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 			c.WebResourceCollections = []web.WebResourceCollection{{}}
 		}
 		c.WebResourceCollections[0].WebResourceName = text
+		updatePreview()
 	})
 
 	// Helper to ensure WebResourceCollection exists
@@ -1166,6 +1380,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 	form.AddTextArea(i18n.T("web.securityconstraint.urlpatterns"), urlPatterns, 40, 3, 0, func(text string) {
 		ensureCollection()
 		c.WebResourceCollections[0].URLPatterns = ParseTextAreaLines(text)
+		updatePreview()
 	})
 
 	// HTTP methods
@@ -1176,6 +1391,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 	form.AddInputField(i18n.T("web.securityconstraint.httpmethods"), httpMethods, 40, nil, func(text string) {
 		ensureCollection()
 		c.WebResourceCollections[0].HTTPMethods = ParseCommaSeparated(text)
+		updatePreview()
 	})
 
 	// Role names
@@ -1193,6 +1409,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 		} else {
 			c.AuthConstraint = nil
 		}
+		updatePreview()
 	})
 
 	// Transport guarantee
@@ -1212,9 +1429,10 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 		} else {
 			c.UserDataConstraint = &web.UserDataConstraint{TransportGuarantee: option}
 		}
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if isNew {
 			v.configService.AddSecurityConstraint(c)
 			v.setStatus(i18n.T("web.securityconstraint.added"))
@@ -1229,7 +1447,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteSecurityConstraint(index); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -1239,7 +1457,7 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showSecurityConstraintList()
 	})
 
@@ -1247,17 +1465,44 @@ func (v *WebView) showSecurityConstraintForm(constraint *web.SecurityConstraint,
 	if !isNew {
 		title = " " + i18n.T("web.securityconstraint.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
+
+	// Initial help
+	updateHelp(0)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showSecurityConstraintList()
 			return nil
 		}
+		// Update help after navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx != lastFocusedIndex {
+						lastFocusedIndex = idx
+						updateHelp(idx)
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("security-constraint-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	layout := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("security-constraint-form", layout, true)
 }
 
 // showLoginConfigForm displays the login configuration form
@@ -1304,7 +1549,7 @@ func (v *WebView) showLoginConfigForm() {
 		c.FormLoginConfig.FormErrorPage = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if c.AuthMethod == "" {
 			v.configService.RemoveLoginConfig()
 			v.setStatus(i18n.T("web.login.removed"))
@@ -1319,10 +1564,11 @@ func (v *WebView) showLoginConfigForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("web.login.title") + " ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1398,7 +1644,7 @@ func (v *WebView) showSecurityRoleForm(role *web.SecurityRole, isNew bool) {
 		r.Description = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if r.RoleName == "" {
 			v.setStatus("Error: " + i18n.T("web.role.error.name"))
 			return
@@ -1415,7 +1661,7 @@ func (v *WebView) showSecurityRoleForm(role *web.SecurityRole, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteSecurityRole(role.RoleName); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -1425,7 +1671,7 @@ func (v *WebView) showSecurityRoleForm(role *web.SecurityRole, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showSecurityRoleList()
 	})
 
@@ -1433,6 +1679,7 @@ func (v *WebView) showSecurityRoleForm(role *web.SecurityRole, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.role.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1504,7 +1751,7 @@ func (v *WebView) showContextParamForm(param *web.ContextParam, isNew bool) {
 		p.Description = text
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		if p.ParamName == "" {
 			v.setStatus("Error: " + i18n.T("web.contextparam.error.name"))
 			return
@@ -1527,7 +1774,7 @@ func (v *WebView) showContextParamForm(param *web.ContextParam, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteContextParam(param.ParamName); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -1537,7 +1784,7 @@ func (v *WebView) showContextParamForm(param *web.ContextParam, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showContextParamList()
 	})
 
@@ -1545,6 +1792,7 @@ func (v *WebView) showContextParamForm(param *web.ContextParam, isNew bool) {
 	if !isNew {
 		title = " " + i18n.T("web.contextparam.edit") + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

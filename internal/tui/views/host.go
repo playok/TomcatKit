@@ -10,6 +10,56 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Help key arrays for host forms (indexed by form item order)
+var hostFormHelpKeysByIndex = []string{
+	"help.host.name",            // 0: Name (hostname)
+	"help.host.appbase",         // 1: App Base
+	"help.host.workdir",         // 2: Work Dir
+	"help.host.unpackwars",      // 3: Unpack WARs
+	"help.host.autodeploy",      // 4: Auto Deploy
+	"help.host.deployonstart",   // 5: Deploy On Startup
+	"help.host.createdirs",      // 6: Create Dirs
+	"help.host.deployxml",       // 7: Deploy XML
+	"help.host.copyxml",         // 8: Copy XML
+	"help.host.deployignore",    // 9: Deploy Ignore (regex)
+	"help.host.startstopthreads", // 10: Start/Stop Threads
+	"help.host.aliases",         // 11: Aliases (comma-separated)
+}
+
+var contextFormHelpKeysByIndex = []string{
+	"help.host.context.path",                // 0: Path
+	"help.host.context.docbase",             // 1: DocBase
+	"help.host.context.reloadable",          // 2: Reloadable
+	"help.host.context.crosscontext",        // 3: Cross Context
+	"help.host.context.privileged",          // 4: Privileged
+	"help.host.context.cookies",             // 5: Cookies
+	"help.host.context.sessioncookiename",   // 6: Session Cookie Name
+	"help.host.context.sessioncookiepath",   // 7: Session Cookie Path
+	"help.host.context.sessioncookiedomain", // 8: Session Cookie Domain
+	"help.host.context.usehttponly",         // 9: Use HttpOnly
+	"help.host.context.antiresourcelocking", // 10: Anti Resource Locking
+	"help.host.context.swallowoutput",       // 11: Swallow Output
+	"help.host.context.cachingallowed",      // 12: Caching Allowed
+	"help.host.context.cachemaxsize",        // 13: Cache Max Size (KB)
+	"help.host.context.cachettl",            // 14: Cache TTL (ms)
+}
+
+var parameterFormHelpKeysByIndex = []string{
+	"help.host.parameter.name",        // 0: Name
+	"help.host.parameter.value",       // 1: Value
+	"help.host.parameter.override",    // 2: Override
+	"help.host.parameter.description", // 3: Description
+}
+
+var managerFormHelpKeysByIndex = []string{
+	"help.host.manager.class",             // 0: Manager Class
+	"help.host.manager.maxactive",         // 1: Max Active Sessions
+	"help.host.manager.sessionidlength",   // 2: Session ID Length
+	"help.host.manager.maxinactive",       // 3: Max Inactive Interval (sec)
+	"help.host.manager.pathname",          // 4: Session File Path
+	"help.host.manager.processexpires",    // 5: Process Expires Frequency
+}
+
 // HostView handles virtual host and context configuration
 type HostView struct {
 	app           *tview.Application
@@ -71,7 +121,7 @@ func (v *HostView) showMainMenu() {
 		})
 
 	menu.AddItem("", "", 0, nil)
-	menu.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 0, func() {
+	menu.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 0, func() {
 		v.onReturn()
 	})
 
@@ -135,7 +185,7 @@ func (v *HostView) showEngineForm() {
 	form.AddInputField("Default Host", engine.DefaultHost, 40, nil, func(text string) { updatePreview() })
 	form.AddInputField("JVM Route", engine.JvmRoute, 30, nil, func(text string) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		engine.Name = form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
 		engine.DefaultHost = form.GetFormItemByLabel("Default Host").(*tview.InputField).GetText()
 		engine.JvmRoute = form.GetFormItemByLabel("JVM Route").(*tview.InputField).GetText()
@@ -148,10 +198,11 @@ func (v *HostView) showEngineForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Engine Settings ").SetBorderColor(tcell.ColorBlue)
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
@@ -205,7 +256,7 @@ func (v *HostView) showHostList() {
 		}
 		v.showHostForm(newHost, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -225,7 +276,13 @@ func (v *HostView) showHostList() {
 // showHostForm shows the host edit form
 func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(hostFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
 
 	// Aliases
 	aliasStr := ""
@@ -250,7 +307,7 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 			DeployIgnore:     GetFormText(form, "Deploy Ignore (regex)"),
 			StartStopThreads: GetFormInt(form, "Start/Stop Threads"),
 		}
-		preview.SetXMLPreview(GenerateHostXML(&tempHost))
+		previewPanel.SetXMLPreview(GenerateHostXML(&tempHost))
 	}
 
 	// Basic settings
@@ -274,7 +331,7 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 
 	originalName := host.Name
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		host.Name = GetFormText(form, "Name (hostname)")
 		host.AppBase = GetFormText(form, "App Base")
 		host.WorkDir = GetFormText(form, "Work Dir")
@@ -318,11 +375,11 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.contexts"), func() {
+		form.AddButton("[white:blue]"+i18n.T("common.contexts")+"[-:-]", func() {
 			v.showContextList(host)
 		})
 
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Virtual Host", host.Name, func() {
 				cfg := v.configService.GetConfig()
 				if cfg != nil && len(cfg.Services) > 0 {
@@ -344,7 +401,7 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showHostList()
 	})
 
@@ -352,11 +409,27 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 	if isNew {
 		title = " Add Virtual Host "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorGreen)
+
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showHostList()
 			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(hostFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(hostFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
 		}
 		return event
 	})
@@ -364,13 +437,17 @@ func (v *HostView) showHostForm(host *server.Host, isNew bool) {
 	// Initial preview
 	updatePreview()
 
-	// Layout with form and preview
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("host-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("host-form", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -390,7 +467,7 @@ func (v *HostView) showContextSelector() {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -433,7 +510,7 @@ func (v *HostView) showContextList(host *server.Host) {
 		}
 		v.showContextForm(host, newCtx, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to host list", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to host list", 0, func() {
 		v.showHostList()
 	})
 
@@ -453,7 +530,13 @@ func (v *HostView) showContextList(host *server.Host) {
 // showContextForm shows the context edit form
 func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew bool) {
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(contextFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempCtx := server.Context{
@@ -475,7 +558,7 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 		tempCtx.CacheMaxSize, _ = strconv.Atoi(maxSize)
 		ttl := form.GetFormItemByLabel("Cache TTL (ms)").(*tview.InputField).GetText()
 		tempCtx.CacheTTL, _ = strconv.Atoi(ttl)
-		preview.SetXMLPreview(GenerateContextXML(&tempCtx))
+		previewPanel.SetXMLPreview(GenerateContextXML(&tempCtx))
 	}
 
 	// Basic settings
@@ -505,7 +588,7 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 
 	originalPath := ctx.Path
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		ctx.Path = form.GetFormItemByLabel("Path").(*tview.InputField).GetText()
 		ctx.DocBase = form.GetFormItemByLabel("DocBase").(*tview.InputField).GetText()
 		ctx.Reloadable = form.GetFormItemByLabel("Reloadable").(*tview.Checkbox).IsChecked()
@@ -543,15 +626,15 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.parameters"), func() {
+		form.AddButton("[white:blue]"+i18n.T("common.parameters")+"[-:-]", func() {
 			v.showParameterList(host, ctx)
 		})
 
-		form.AddButton(i18n.T("host.sessionmanager"), func() {
+		form.AddButton("[white:blue]"+i18n.T("host.sessionmanager")+"[-:-]", func() {
 			v.showManagerForm(host, ctx)
 		})
 
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Context", ctx.Path, func() {
 				for i := range host.Contexts {
 					if host.Contexts[i].Path == ctx.Path {
@@ -569,7 +652,7 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showContextList(host)
 	})
 
@@ -577,11 +660,27 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 	if isNew {
 		title = " Add Context "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorYellow)
+
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showContextList(host)
 			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(contextFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(contextFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
 		}
 		return event
 	})
@@ -589,13 +688,17 @@ func (v *HostView) showContextForm(host *server.Host, ctx *server.Context, isNew
 	// Initial preview
 	updatePreview()
 
-	// Layout with form and preview
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("context-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("context-form", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -623,7 +726,7 @@ func (v *HostView) showParameterList(host *server.Host, ctx *server.Context) {
 		}
 		v.showParameterForm(host, ctx, newParam, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to context", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to context", 0, func() {
 		v.showContextForm(host, ctx, false)
 	})
 
@@ -643,7 +746,13 @@ func (v *HostView) showParameterList(host *server.Host, ctx *server.Context) {
 // showParameterForm shows the parameter edit form
 func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, param *server.Parameter, isNew bool) {
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(parameterFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempParam := server.Parameter{
@@ -652,7 +761,7 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 			Override:    form.GetFormItemByLabel("Override").(*tview.Checkbox).IsChecked(),
 			Description: form.GetFormItemByLabel("Description").(*tview.InputField).GetText(),
 		}
-		preview.SetXMLPreview(GenerateParameterXML(&tempParam))
+		previewPanel.SetXMLPreview(GenerateParameterXML(&tempParam))
 	}
 
 	form.AddInputField("Name", param.Name, 40, nil, func(text string) { updatePreview() })
@@ -662,7 +771,7 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 
 	originalName := param.Name
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		param.Name = form.GetFormItemByLabel("Name").(*tview.InputField).GetText()
 		param.Value = form.GetFormItemByLabel("Value").(*tview.InputField).GetText()
 		param.Override = form.GetFormItemByLabel("Override").(*tview.Checkbox).IsChecked()
@@ -688,7 +797,7 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Parameter", param.Name, func() {
 				for i := range ctx.Parameters {
 					if ctx.Parameters[i].Name == param.Name {
@@ -706,7 +815,7 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showParameterList(host, ctx)
 	})
 
@@ -714,11 +823,27 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 	if isNew {
 		title = " Add Parameter "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorPurple)
+
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showParameterList(host, ctx)
 			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(parameterFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(parameterFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
 		}
 		return event
 	})
@@ -726,13 +851,17 @@ func (v *HostView) showParameterForm(host *server.Host, ctx *server.Context, par
 	// Initial preview
 	updatePreview()
 
-	// Layout with form and preview
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("parameter-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("parameter-form", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -743,7 +872,13 @@ func (v *HostView) showManagerForm(host *server.Host, ctx *server.Context) {
 	}
 
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(managerFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
 
 	// Manager class options
 	managerClasses := []string{
@@ -771,7 +906,7 @@ func (v *HostView) showManagerForm(host *server.Host, ctx *server.Context) {
 		tempMgr.Pathname = form.GetFormItemByLabel("Session File Path").(*tview.InputField).GetText()
 		procExp := form.GetFormItemByLabel("Process Expires Frequency").(*tview.InputField).GetText()
 		tempMgr.ProcessExpiresFrequency, _ = strconv.Atoi(procExp)
-		preview.SetXMLPreview(GenerateManagerXML(&tempMgr))
+		previewPanel.SetXMLPreview(GenerateManagerXML(&tempMgr))
 	}
 
 	form.AddDropDown("Manager Class", managerClasses, classIdx, func(option string, optionIndex int) { updatePreview() })
@@ -782,7 +917,7 @@ func (v *HostView) showManagerForm(host *server.Host, ctx *server.Context) {
 	form.AddInputField("Session File Path", ctx.Manager.Pathname, 40, nil, func(text string) { updatePreview() })
 	form.AddInputField("Process Expires Frequency", strconv.Itoa(ctx.Manager.ProcessExpiresFrequency), 10, acceptNumber, func(text string) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		_, ctx.Manager.ClassName = form.GetFormItemByLabel("Manager Class").(*tview.DropDown).GetCurrentOption()
 		ctx.Manager.MaxActiveSessions, _ = strconv.Atoi(form.GetFormItemByLabel("Max Active Sessions").(*tview.InputField).GetText())
 		ctx.Manager.SessionIdLength, _ = strconv.Atoi(form.GetFormItemByLabel("Session ID Length").(*tview.InputField).GetText())
@@ -804,15 +939,31 @@ func (v *HostView) showManagerForm(host *server.Host, ctx *server.Context) {
 		v.showContextForm(host, ctx, false)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showContextForm(host, ctx, false)
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Session Manager ").SetBorderColor(tcell.ColorBlue)
+
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showContextForm(host, ctx, false)
 			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(managerFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(managerFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
 		}
 		return event
 	})
@@ -820,13 +971,17 @@ func (v *HostView) showManagerForm(host *server.Host, ctx *server.Context) {
 	// Initial preview
 	updatePreview()
 
-	// Layout with form and preview
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("manager-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("manager-form", flex, true)
 	v.app.SetFocus(form)
 }
 

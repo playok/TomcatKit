@@ -21,6 +21,106 @@ type ContextView struct {
 	configService *jndi.ContextService
 }
 
+// Help key array for context settings form (indexed by form item order)
+var contextSettingsHelpKeysByIndex = []string{
+	"help.context.reloadable",          // 0: Reloadable
+	"help.context.crosscontext",        // 1: CrossContext
+	"help.context.privileged",          // 2: Privileged
+	"help.context.cookies",             // 3: Cookies
+	"help.context.usehttponly",         // 4: UseHttpOnly
+	"help.context.sessioncookiename",   // 5: Session Cookie Name
+	"help.context.cachingallowed",      // 6: Caching Allowed
+	"help.context.cachemaxsize",        // 7: Cache Max Size
+	"help.context.antiresourcelocking", // 8: Anti Resource Locking
+	"help.context.swallowoutput",       // 9: Swallow Output
+}
+
+// Help key arrays for DataSource resource form
+var resourceDataSourceHelpKeysByIndex = []string{
+	"help.context.resource.name",             // 0: Name
+	"help.context.resource.auth",             // 1: Auth
+	"help.context.resource.dbtype",           // 2: Database Type
+	"help.context.resource.driver",           // 3: Driver Class
+	"help.context.resource.url",              // 4: URL
+	"help.context.resource.username",         // 5: Username
+	"help.context.resource.password",         // 6: Password
+	"help.context.resource.initialsize",      // 7: Initial Size
+	"help.context.resource.maxtotal",         // 8: Max Total
+	"help.context.resource.minidle",          // 9: Min Idle
+	"help.context.resource.maxidle",          // 10: Max Idle
+	"help.context.resource.validationquery",  // 11: Validation Query
+	"help.context.resource.testonborrow",     // 12: Test On Borrow
+	"help.context.resource.testwhileidle",    // 13: Test While Idle
+}
+
+// Help key arrays for MailSession resource form
+var resourceMailHelpKeysByIndex = []string{
+	"help.context.resource.name",      // 0: Name
+	"help.context.resource.auth",      // 1: Auth
+	"help.context.mail.smtphost",      // 2: SMTP Host
+	"help.context.mail.smtpport",      // 3: SMTP Port
+	"help.context.mail.smtpauth",      // 4: SMTP Auth
+	"help.context.mail.starttls",      // 5: STARTTLS
+	"help.context.mail.smtpuser",      // 6: SMTP User
+}
+
+// Help key arrays for Environment form
+var environmentHelpKeysByIndex = []string{
+	"help.context.env.name",        // 0: Name
+	"help.context.env.value",       // 1: Value
+	"help.context.env.type",        // 2: Type
+	"help.context.env.override",    // 3: Override
+	"help.context.env.description", // 4: Description
+}
+
+// Help key arrays for ResourceLink form
+var resourceLinkHelpKeysByIndex = []string{
+	"help.context.reslink.name",   // 0: Name
+	"help.context.reslink.global", // 1: Global
+	"help.context.reslink.type",   // 2: Type
+}
+
+// Help key arrays for Parameter form
+var parameterHelpKeysByIndex = []string{
+	"help.context.param.name",        // 0: Name
+	"help.context.param.value",       // 1: Value
+	"help.context.param.override",    // 2: Override
+	"help.context.param.description", // 3: Description
+}
+
+// Help key arrays for WatchedResource form
+var watchedResourceHelpKeysByIndex = []string{
+	"help.context.watched.path", // 0: Resource Path
+}
+
+// Help key arrays for Manager form
+var managerHelpKeysByIndex = []string{
+	"help.context.manager.type",               // 0: Manager Type
+	"help.context.manager.maxactivesessions",  // 1: Max Active Sessions
+	"help.context.manager.sessionidlength",    // 2: Session ID Length
+	"help.context.manager.maxinactiveinterval",// 3: Max Inactive Interval
+	"help.context.manager.saveonrestart",      // 4: Save On Restart
+	"help.context.manager.storetype",          // 5: Session Store
+	"help.context.manager.storedir",           // 6: Store Directory
+}
+
+// Help key arrays for CookieProcessor form
+var cookieProcessorHelpKeysByIndex = []string{
+	"help.context.cookie.processor", // 0: Cookie Processor
+	"help.context.cookie.samesite",  // 1: SameSite Cookies
+}
+
+// Help key arrays for JarScanner form
+var jarScannerHelpKeysByIndex = []string{
+	"help.context.jarscanner.scanclasspath",  // 0: Scan ClassPath
+	"help.context.jarscanner.scanmanifest",   // 1: Scan Manifest
+	"help.context.jarscanner.scanallfiles",   // 2: Scan All Files
+	"help.context.jarscanner.scanalldirs",    // 3: Scan All Directories
+	"help.context.jarscanner.scanbootstrap",  // 4: Scan Bootstrap ClassPath
+	"help.context.jarscanner.tldskip",        // 5: TLD Skip Pattern
+	"help.context.jarscanner.plugskip",       // 6: Pluggability Skip Pattern
+}
+
 // NewContextView creates a new context configuration view
 func NewContextView(app *tview.Application, mainPages *tview.Pages, statusBar *tview.TextView, catalinaBase string, onReturn func()) *ContextView {
 	return &ContextView{
@@ -156,19 +256,35 @@ func (v *ContextView) showMainMenu() {
 func (v *ContextView) showContextSettingsForm() {
 	ctx := v.configService.GetContext()
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(contextSettingsHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateContextSettingsXML(ctx))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	// Basic settings
 	form.AddCheckbox("Reloadable", ctx.Reloadable, func(checked bool) {
 		ctx.Reloadable = checked
+		updatePreview()
 	})
 
 	form.AddCheckbox("CrossContext", ctx.CrossContext, func(checked bool) {
 		ctx.CrossContext = checked
+		updatePreview()
 	})
 
 	form.AddCheckbox("Privileged", ctx.Privileged, func(checked bool) {
 		ctx.Privileged = checked
+		updatePreview()
 	})
 
 	// Cookie settings
@@ -183,6 +299,7 @@ func (v *ContextView) showContextSettingsForm() {
 	}
 	form.AddDropDown("Cookies", cookieOptions, cookieIdx, func(option string, index int) {
 		ctx.Cookies = option
+		updatePreview()
 	})
 
 	useHttpOnly := ctx.UseHttpOnly
@@ -195,10 +312,12 @@ func (v *ContextView) showContextSettingsForm() {
 	}
 	form.AddDropDown("UseHttpOnly", []string{"true", "false"}, httpOnlyIdx, func(option string, index int) {
 		ctx.UseHttpOnly = option
+		updatePreview()
 	})
 
 	form.AddInputField("Session Cookie Name", ctx.SessionCookieName, 30, nil, func(text string) {
 		ctx.SessionCookieName = text
+		updatePreview()
 	})
 
 	// Caching
@@ -212,11 +331,13 @@ func (v *ContextView) showContextSettingsForm() {
 	}
 	form.AddDropDown("Caching Allowed", []string{"true", "false"}, cachingIdx, func(option string, index int) {
 		ctx.CachingAllowed = option
+		updatePreview()
 	})
 
 	form.AddInputField("Cache Max Size (KB)", strconv.Itoa(ctx.CacheMaxSize), 10, acceptNumber, func(text string) {
 		if size, err := strconv.Atoi(text); err == nil {
 			ctx.CacheMaxSize = size
+			updatePreview()
 		}
 	})
 
@@ -228,6 +349,7 @@ func (v *ContextView) showContextSettingsForm() {
 	}
 	form.AddDropDown("Anti Resource Locking", []string{"true", "false"}, antiLockingIdx, func(option string, index int) {
 		ctx.AntiResourceLocking = option
+		updatePreview()
 	})
 
 	// Swallow output
@@ -237,29 +359,55 @@ func (v *ContextView) showContextSettingsForm() {
 	}
 	form.AddDropDown("Swallow Output", []string{"true", "false"}, swallowIdx, func(option string, index int) {
 		ctx.SwallowOutput = option
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		v.configService.UpdateContextSettings(ctx)
 		v.setStatus("Context settings updated")
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Context Settings ")
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(contextSettingsHelpKeysByIndex) {
+						helpPanel.SetHelpKey(contextSettingsHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("settings-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("settings-form", flex, true)
 }
 
 // showResourceList displays the JNDI resources list
@@ -319,10 +467,23 @@ func (v *ContextView) showResourceList() {
 func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 	r := *resource
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateJNDIResourceXML(&r))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	form.AddInputField("Name", r.Name, 40, nil, func(text string) {
 		r.Name = text
+		updatePreview()
 	})
 
 	// Auth dropdown
@@ -333,10 +494,13 @@ func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 	}
 	form.AddDropDown("Auth", authOptions, authIdx, func(option string, index int) {
 		r.Auth = option
+		updatePreview()
 	})
 
 	// Type-specific fields
 	if r.Type == string(jndi.ResourceTypeDataSource) {
+		helpPanel.SetHelpKey(resourceDataSourceHelpKeysByIndex[0])
+
 		// Database type selector
 		dbTypes := []string{"MySQL", "PostgreSQL", "Oracle", "SQL Server", "MariaDB", "H2", "HSQLDB", "Derby", "SQLite"}
 		form.AddDropDown("Database Type", dbTypes, 0, func(option string, index int) {
@@ -349,77 +513,96 @@ func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 			if query, ok := jndi.ValidationQueries[option]; ok {
 				r.ValidationQuery = query
 			}
+			updatePreview()
 		})
 
 		form.AddInputField("Driver Class", r.DriverClassName, 50, nil, func(text string) {
 			r.DriverClassName = text
+			updatePreview()
 		})
 
 		form.AddInputField("URL", r.URL, 60, nil, func(text string) {
 			r.URL = text
+			updatePreview()
 		})
 
 		form.AddInputField("Username", r.Username, 30, nil, func(text string) {
 			r.Username = text
+			updatePreview()
 		})
 
 		form.AddPasswordField("Password", r.Password, 30, '*', func(text string) {
 			r.Password = text
+			updatePreview()
 		})
 
 		form.AddInputField("Initial Size", strconv.Itoa(r.InitialSize), 10, acceptNumber, func(text string) {
 			r.InitialSize, _ = strconv.Atoi(text)
+			updatePreview()
 		})
 
 		form.AddInputField("Max Total", strconv.Itoa(r.MaxTotal), 10, acceptNumber, func(text string) {
 			r.MaxTotal, _ = strconv.Atoi(text)
+			updatePreview()
 		})
 
 		form.AddInputField("Min Idle", strconv.Itoa(r.MinIdle), 10, acceptNumber, func(text string) {
 			r.MinIdle, _ = strconv.Atoi(text)
+			updatePreview()
 		})
 
 		form.AddInputField("Max Idle", strconv.Itoa(r.MaxIdle), 10, acceptNumber, func(text string) {
 			r.MaxIdle, _ = strconv.Atoi(text)
+			updatePreview()
 		})
 
 		form.AddInputField("Validation Query", r.ValidationQuery, 40, nil, func(text string) {
 			r.ValidationQuery = text
+			updatePreview()
 		})
 
 		form.AddCheckbox("Test On Borrow", r.TestOnBorrow, func(checked bool) {
 			r.TestOnBorrow = checked
+			updatePreview()
 		})
 
 		form.AddCheckbox("Test While Idle", r.TestWhileIdle, func(checked bool) {
 			r.TestWhileIdle = checked
+			updatePreview()
 		})
 
 	} else if r.Type == string(jndi.ResourceTypeMailSession) {
+		helpPanel.SetHelpKey(resourceMailHelpKeysByIndex[0])
+
 		form.AddInputField("SMTP Host", r.MailSmtpHost, 40, nil, func(text string) {
 			r.MailSmtpHost = text
+			updatePreview()
 		})
 
 		form.AddInputField("SMTP Port", r.MailSmtpPort, 10, nil, func(text string) {
 			r.MailSmtpPort = text
+			updatePreview()
 		})
 
 		authEnabled := r.MailSmtpAuth == "true"
 		form.AddCheckbox("SMTP Auth", authEnabled, func(checked bool) {
 			r.MailSmtpAuth = BoolToString(checked)
+			updatePreview()
 		})
 
 		starttls := r.MailSmtpStartTLS == "true"
 		form.AddCheckbox("STARTTLS", starttls, func(checked bool) {
 			r.MailSmtpStartTLS = BoolToString(checked)
+			updatePreview()
 		})
 
 		form.AddInputField("SMTP User", r.MailSmtpUser, 40, nil, func(text string) {
 			r.MailSmtpUser = text
+			updatePreview()
 		})
 	}
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if r.Name == "" {
 			v.setStatus("Error: Name is required")
 			return
@@ -442,7 +625,7 @@ func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteResource(resource.Name); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -452,7 +635,7 @@ func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showResourceList()
 	})
 
@@ -460,17 +643,48 @@ func (v *ContextView) showResourceForm(resource *jndi.Resource, isNew bool) {
 	if !isNew {
 		title = " Edit Resource: " + resource.Name + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showResourceList()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					var helpKeys []string
+					if r.Type == string(jndi.ResourceTypeDataSource) {
+						helpKeys = resourceDataSourceHelpKeysByIndex
+					} else if r.Type == string(jndi.ResourceTypeMailSession) {
+						helpKeys = resourceMailHelpKeysByIndex
+					}
+					if idx >= 0 && idx < len(helpKeys) {
+						helpPanel.SetHelpKey(helpKeys[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("resource-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("resource-form", flex, true)
 }
 
 // showEnvironmentList displays the environment entries list
@@ -517,14 +731,29 @@ func (v *ContextView) showEnvironmentList() {
 func (v *ContextView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	e := *env
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(environmentHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateEnvironmentXML(&e))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	form.AddInputField("Name", e.Name, 40, nil, func(text string) {
 		e.Name = text
+		updatePreview()
 	})
 
 	form.AddInputField("Value", e.Value, 50, nil, func(text string) {
 		e.Value = text
+		updatePreview()
 	})
 
 	typeIdx := 0
@@ -536,17 +765,20 @@ func (v *ContextView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	}
 	form.AddDropDown("Type", jndi.EnvironmentTypes, typeIdx, func(option string, index int) {
 		e.Type = option
+		updatePreview()
 	})
 
 	form.AddCheckbox("Override", e.Override, func(checked bool) {
 		e.Override = checked
+		updatePreview()
 	})
 
 	form.AddInputField("Description", e.Description, 50, nil, func(text string) {
 		e.Description = text
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if e.Name == "" {
 			v.setStatus("Error: Name is required")
 			return
@@ -569,7 +801,7 @@ func (v *ContextView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteEnvironment(env.Name); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -579,7 +811,7 @@ func (v *ContextView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showEnvironmentList()
 	})
 
@@ -587,17 +819,42 @@ func (v *ContextView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	if !isNew {
 		title = " Edit Environment Entry "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showEnvironmentList()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(environmentHelpKeysByIndex) {
+						helpPanel.SetHelpKey(environmentHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("environment-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("environment-form", flex, true)
 }
 
 // showResourceLinkList displays the resource links list
@@ -644,21 +901,37 @@ func (v *ContextView) showResourceLinkList() {
 func (v *ContextView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	l := *link
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(resourceLinkHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateResourceLinkXML(&l))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	form.AddInputField("Name (local)", l.Name, 40, nil, func(text string) {
 		l.Name = text
+		updatePreview()
 	})
 
 	form.AddInputField("Global (server.xml)", l.Global, 40, nil, func(text string) {
 		l.Global = text
+		updatePreview()
 	})
 
 	form.AddInputField("Type", l.Type, 50, nil, func(text string) {
 		l.Type = text
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if l.Name == "" || l.Global == "" {
 			v.setStatus("Error: Name and Global are required")
 			return
@@ -681,7 +954,7 @@ func (v *ContextView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) 
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteResourceLink(link.Name); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -691,7 +964,7 @@ func (v *ContextView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) 
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showResourceLinkList()
 	})
 
@@ -699,17 +972,42 @@ func (v *ContextView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) 
 	if !isNew {
 		title = " Edit Resource Link "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showResourceLinkList()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(resourceLinkHelpKeysByIndex) {
+						helpPanel.SetHelpKey(resourceLinkHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("resource-link-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("resource-link-form", flex, true)
 }
 
 // showParameterList displays the context parameters list
@@ -756,25 +1054,42 @@ func (v *ContextView) showParameterList() {
 func (v *ContextView) showParameterForm(param *jndi.ContextParameter, isNew bool) {
 	p := *param
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(parameterHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateContextParameterXML(&p))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	form.AddInputField("Name", p.Name, 40, nil, func(text string) {
 		p.Name = text
+		updatePreview()
 	})
 
 	form.AddInputField("Value", p.Value, 50, nil, func(text string) {
 		p.Value = text
+		updatePreview()
 	})
 
 	form.AddCheckbox("Override", p.Override, func(checked bool) {
 		p.Override = checked
+		updatePreview()
 	})
 
 	form.AddInputField("Description", p.Description, 50, nil, func(text string) {
 		p.Description = text
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if p.Name == "" {
 			v.setStatus("Error: Name is required")
 			return
@@ -797,7 +1112,7 @@ func (v *ContextView) showParameterForm(param *jndi.ContextParameter, isNew bool
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			if err := v.configService.DeleteParameter(param.Name); err != nil {
 				v.setStatus("Error: " + err.Error())
 				return
@@ -807,7 +1122,7 @@ func (v *ContextView) showParameterForm(param *jndi.ContextParameter, isNew bool
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showParameterList()
 	})
 
@@ -815,17 +1130,42 @@ func (v *ContextView) showParameterForm(param *jndi.ContextParameter, isNew bool
 	if !isNew {
 		title = " Edit Parameter "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showParameterList()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(parameterHelpKeysByIndex) {
+						helpPanel.SetHelpKey(parameterHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("parameter-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("parameter-form", flex, true)
 }
 
 // showWatchedResourceList displays the watched resources list
@@ -878,10 +1218,24 @@ func (v *ContextView) showWatchedResourceList() {
 func (v *ContextView) showWatchedResourceForm(resource string, isNew bool) {
 	newResource := resource
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(watchedResourceHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateWatchedResourceXML(newResource))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	form.AddInputField("Resource Path", resource, 60, nil, func(text string) {
 		newResource = text
+		updatePreview()
 	})
 
 	form.AddTextView("Examples", `WEB-INF/web.xml
@@ -889,7 +1243,7 @@ ${catalina.base}/conf/web.xml
 WEB-INF/classes
 META-INF/context.xml`, 60, 4, true, false)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if newResource == "" {
 			v.setStatus("Error: Resource path is required")
 			return
@@ -904,14 +1258,14 @@ META-INF/context.xml`, 60, 4, true, false)
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.configService.RemoveWatchedResource(resource)
 			v.setStatus("Watched resource deleted")
 			v.showWatchedResourceList()
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showWatchedResourceList()
 	})
 
@@ -919,17 +1273,42 @@ META-INF/context.xml`, 60, 4, true, false)
 	if !isNew {
 		title = " Edit Watched Resource "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showWatchedResourceList()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(watchedResourceHelpKeysByIndex) {
+						helpPanel.SetHelpKey(watchedResourceHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("watched-resource-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("watched-resource-form", flex, true)
 }
 
 // showManagerForm displays the session manager configuration form
@@ -940,6 +1319,19 @@ func (v *ContextView) showManagerForm() {
 	}
 
 	m := *manager
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(managerHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateContextManagerXML(&m))
+	}
+	updatePreview()
 
 	form := tview.NewForm()
 
@@ -955,24 +1347,29 @@ func (v *ContextView) showManagerForm() {
 		} else if index == 1 {
 			m.ClassName = jndi.ManagerPersistent
 		}
+		updatePreview()
 	})
 
 	form.AddInputField("Max Active Sessions", strconv.Itoa(m.MaxActiveSessions), 10, nil, func(text string) {
 		m.MaxActiveSessions, _ = strconv.Atoi(text)
+		updatePreview()
 	})
 
 	form.AddInputField("Session ID Length", strconv.Itoa(m.SessionIdLength), 10, acceptNumber, func(text string) {
 		m.SessionIdLength, _ = strconv.Atoi(text)
+		updatePreview()
 	})
 
 	form.AddInputField("Max Inactive Interval (sec)", strconv.Itoa(m.MaxInactiveInterval), 10, acceptNumber, func(text string) {
 		m.MaxInactiveInterval, _ = strconv.Atoi(text)
+		updatePreview()
 	})
 
 	// PersistentManager specific
 	saveOnRestart := m.SaveOnRestart == "true"
 	form.AddCheckbox("Save On Restart (Persistent)", saveOnRestart, func(checked bool) {
 		m.SaveOnRestart = BoolToString(checked)
+		updatePreview()
 	})
 
 	// Store configuration
@@ -990,6 +1387,7 @@ func (v *ContextView) showManagerForm() {
 		} else {
 			m.Store.ClassName = jndi.StoreJDBC
 		}
+		updatePreview()
 	})
 
 	storeDir := ""
@@ -1001,9 +1399,10 @@ func (v *ContextView) showManagerForm() {
 			m.Store = &jndi.SessionStore{ClassName: jndi.StoreFile}
 		}
 		m.Store.Directory = text
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		// Check if user selected to remove manager
 		dropdown := form.GetFormItem(0).(*tview.DropDown)
 		_, option := dropdown.GetCurrentOption()
@@ -1017,21 +1416,46 @@ func (v *ContextView) showManagerForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Session Manager Configuration ")
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(managerHelpKeysByIndex) {
+						helpPanel.SetHelpKey(managerHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("manager-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("manager-form", flex, true)
 }
 
 // showCookieProcessorForm displays the cookie processor configuration form
@@ -1042,6 +1466,19 @@ func (v *ContextView) showCookieProcessorForm() {
 	}
 
 	p := *processor
+
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(cookieProcessorHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateCookieProcessorXML(&p))
+	}
+	updatePreview()
 
 	form := tview.NewForm()
 
@@ -1057,6 +1494,7 @@ func (v *ContextView) showCookieProcessorForm() {
 		} else if index == 1 {
 			p.ClassName = jndi.CookieProcessorLegacy
 		}
+		updatePreview()
 	})
 
 	// SameSite
@@ -1069,9 +1507,10 @@ func (v *ContextView) showCookieProcessorForm() {
 	}
 	form.AddDropDown("SameSite Cookies", jndi.SameSiteCookieValues, sameSiteIdx, func(option string, index int) {
 		p.SameSiteCookies = option
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		dropdown := form.GetFormItem(0).(*tview.DropDown)
 		_, option := dropdown.GetCurrentOption()
 		if strings.Contains(option, "Remove") {
@@ -1084,21 +1523,46 @@ func (v *ContextView) showCookieProcessorForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Cookie Processor Configuration ")
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(cookieProcessorHelpKeysByIndex) {
+						helpPanel.SetHelpKey(cookieProcessorHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("cookie-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("cookie-form", flex, true)
 }
 
 // showJarScannerForm displays the JAR scanner configuration form
@@ -1110,6 +1574,19 @@ func (v *ContextView) showJarScannerForm() {
 
 	s := *scanner
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(jarScannerHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
+	// Update preview function
+	updatePreview := func() {
+		previewPanel.SetXMLPreview(GenerateJarScannerXML(&s))
+	}
+	updatePreview()
+
 	form := tview.NewForm()
 
 	scanClassPath := s.ScanClassPath == "true"
@@ -1119,6 +1596,7 @@ func (v *ContextView) showJarScannerForm() {
 		} else {
 			s.ScanClassPath = "false"
 		}
+		updatePreview()
 	})
 
 	scanManifest := s.ScanManifest == "true"
@@ -1128,6 +1606,7 @@ func (v *ContextView) showJarScannerForm() {
 		} else {
 			s.ScanManifest = "false"
 		}
+		updatePreview()
 	})
 
 	scanAllFiles := s.ScanAllFiles == "true"
@@ -1137,6 +1616,7 @@ func (v *ContextView) showJarScannerForm() {
 		} else {
 			s.ScanAllFiles = "false"
 		}
+		updatePreview()
 	})
 
 	scanAllDirs := s.ScanAllDirectories == "true"
@@ -1146,6 +1626,7 @@ func (v *ContextView) showJarScannerForm() {
 		} else {
 			s.ScanAllDirectories = "false"
 		}
+		updatePreview()
 	})
 
 	scanBootstrap := s.ScanBootstrapClassPath == "true"
@@ -1155,6 +1636,7 @@ func (v *ContextView) showJarScannerForm() {
 		} else {
 			s.ScanBootstrapClassPath = "false"
 		}
+		updatePreview()
 	})
 
 	// JarScanFilter settings
@@ -1164,39 +1646,66 @@ func (v *ContextView) showJarScannerForm() {
 
 	form.AddInputField("TLD Skip Pattern", s.JarScanFilter.TldSkip, 60, nil, func(text string) {
 		s.JarScanFilter.TldSkip = text
+		updatePreview()
 	})
 
 	form.AddInputField("Pluggability Skip Pattern", s.JarScanFilter.PluggabilitySkip, 60, nil, func(text string) {
 		s.JarScanFilter.PluggabilitySkip = text
+		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		v.configService.SetJarScanner(&s)
 		v.setStatus("JAR scanner configured")
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.remove"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.remove")+"[-:-]", func() {
 		v.configService.RemoveJarScanner()
 		v.setStatus("JAR scanner removed")
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" JAR Scanner Configuration ")
 
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
 		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(jarScannerHelpKeysByIndex) {
+						helpPanel.SetHelpKey(jarScannerHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("jarscanner-form", form, true)
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(form, 0, 2, true).
+		AddItem(previewPanel, 0, 1, false)
+
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("jarscanner-form", flex, true)
 }
 
 // saveConfiguration saves the context configuration

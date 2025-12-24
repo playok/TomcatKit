@@ -83,7 +83,7 @@ func (v *JNDIView) showMainMenu() {
 		})
 
 	menu.AddItem("", "", 0, nil)
-	menu.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 0, func() {
+	menu.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 0, func() {
 		v.onReturn()
 	})
 
@@ -148,7 +148,7 @@ func (v *JNDIView) showDataSourceList() {
 	list.AddItem("[yellow]► Quick Add (Template)[-]", "Create from database template", 't', func() {
 		v.showDataSourceTemplates()
 	})
-	list.AddItem("[red]Back[-]", "Return to JNDI menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to JNDI menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -189,7 +189,7 @@ func (v *JNDIView) showDataSourceTemplates() {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to DataSource list", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to DataSource list", 0, func() {
 		v.showDataSourceList()
 	})
 
@@ -278,17 +278,14 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 	formReady := false
 
 	// Help panel on the right
-	helpPanel := tview.NewTextView().
-		SetDynamicColors(true).
-		SetWordWrap(true)
-	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+	helpPanel := NewDynamicHelpPanel()
 
 	// Function to update help text
 	updateHelp := func(label string) {
 		if key, ok := dataSourceHelpKeys[label]; ok {
-			helpPanel.SetText(i18n.T(key))
+			helpPanel.SetHelpKey(key)
 		} else {
-			helpPanel.SetText(i18n.T("help.default"))
+			helpPanel.SetHelpKey("help.default")
 		}
 	}
 
@@ -360,7 +357,7 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 	form.AddCheckbox("Test On Borrow", resource.TestOnBorrow, func(checked bool) { updatePreview() })
 	form.AddCheckbox("Test While Idle", resource.TestWhileIdle, func(checked bool) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		resource.Name = GetFormText(form, "Name (JNDI)")
 		resource.Auth = GetFormDropDownText(form, "Auth")
 		resource.Factory = GetFormText(form, "Factory")
@@ -399,7 +396,7 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("DataSource", resource.Name, func() {
 				if err := v.contextService.DeleteResource(resource.Name); err != nil {
 					v.setStatus(fmt.Sprintf("[red]Error: %v[-]", err))
@@ -415,7 +412,7 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showDataSourceList()
 	})
 
@@ -428,6 +425,7 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 	if isNew {
 		title = " Add DataSource "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorGreen)
 
 	// Handle key events and update help on navigation
@@ -461,7 +459,7 @@ func (v *JNDIView) showDataSourceForm(resource *jndi.Resource, isNew bool) {
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(leftPane, 0, 2, true).
-		AddItem(helpPanel, 40, 0, false)
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("datasource-form", layout, true)
 	v.app.SetFocus(form)
@@ -485,7 +483,7 @@ func (v *JNDIView) showMailSessionList() {
 		newMS := jndi.NewMailSessionResource("mail/Session")
 		v.showMailSessionForm(newMS, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to JNDI menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to JNDI menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -509,17 +507,14 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 	formReady := false
 
 	// Help panel on the right
-	helpPanel := tview.NewTextView().
-		SetDynamicColors(true).
-		SetWordWrap(true)
-	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+	helpPanel := NewDynamicHelpPanel()
 
 	// Function to update help text
 	updateHelp := func(label string) {
 		if key, ok := mailSessionHelpKeys[label]; ok {
-			helpPanel.SetText(i18n.T(key))
+			helpPanel.SetHelpKey(key)
 		} else {
-			helpPanel.SetText(i18n.T("help.default"))
+			helpPanel.SetHelpKey("help.default")
 		}
 	}
 
@@ -574,7 +569,7 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 	debugEnabled := resource.MailDebug == "true"
 	form.AddCheckbox("Debug Mode", debugEnabled, func(checked bool) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		resource.Name = GetFormText(form, "Name (JNDI)")
 		resource.Auth = GetFormDropDownText(form, "Auth")
 		resource.MailSmtpHost = GetFormText(form, "SMTP Host")
@@ -607,7 +602,7 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Mail Session", resource.Name, func() {
 				if err := v.contextService.DeleteResource(resource.Name); err != nil {
 					v.setStatus(fmt.Sprintf("[red]Error: %v[-]", err))
@@ -623,7 +618,7 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMailSessionList()
 	})
 
@@ -636,6 +631,7 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 	if isNew {
 		title = " Add Mail Session "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorBlue)
 
 	// Handle key events and update help on navigation
@@ -669,7 +665,7 @@ func (v *JNDIView) showMailSessionForm(resource *jndi.Resource, isNew bool) {
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(leftPane, 0, 2, true).
-		AddItem(helpPanel, 40, 0, false)
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("mailsession-form", layout, true)
 	v.app.SetFocus(form)
@@ -696,7 +692,7 @@ func (v *JNDIView) showEnvironmentList() {
 		newEnv := jndi.NewEnvironment("myapp/config", "", "java.lang.String")
 		v.showEnvironmentForm(newEnv, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to JNDI menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to JNDI menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -720,17 +716,14 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	formReady := false
 
 	// Help panel on the right
-	helpPanel := tview.NewTextView().
-		SetDynamicColors(true).
-		SetWordWrap(true)
-	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+	helpPanel := NewDynamicHelpPanel()
 
 	// Function to update help text
 	updateHelp := func(label string) {
 		if key, ok := environmentHelpKeys[label]; ok {
-			helpPanel.SetText(i18n.T(key))
+			helpPanel.SetHelpKey(key)
 		} else {
-			helpPanel.SetText(i18n.T("help.default"))
+			helpPanel.SetHelpKey("help.default")
 		}
 	}
 
@@ -768,7 +761,7 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	form.AddCheckbox("Override", env.Override, func(checked bool) { updatePreview() })
 	form.AddInputField("Description", env.Description, 50, nil, func(text string) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		env.Name = GetFormText(form, "Name (JNDI)")
 		env.Value = GetFormText(form, "Value")
 		env.Type = GetFormDropDownText(form, "Type")
@@ -797,7 +790,7 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Environment", env.Name, func() {
 				if err := v.contextService.DeleteEnvironment(env.Name); err != nil {
 					v.setStatus(fmt.Sprintf("[red]Error: %v[-]", err))
@@ -813,7 +806,7 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showEnvironmentList()
 	})
 
@@ -826,6 +819,7 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	if isNew {
 		title = " Add Environment Entry "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorYellow)
 
 	// Handle key events and update help on navigation
@@ -859,7 +853,7 @@ func (v *JNDIView) showEnvironmentForm(env *jndi.Environment, isNew bool) {
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(leftPane, 0, 2, true).
-		AddItem(helpPanel, 40, 0, false)
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("environment-form", layout, true)
 	v.app.SetFocus(form)
@@ -883,7 +877,7 @@ func (v *JNDIView) showResourceLinkList() {
 		newLink := jndi.NewResourceLink("jdbc/LocalDB", "jdbc/GlobalDB", string(jndi.ResourceTypeDataSource))
 		v.showResourceLinkForm(newLink, true)
 	})
-	list.AddItem("[red]Back[-]", "Return to JNDI menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to JNDI menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -907,17 +901,14 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	formReady := false
 
 	// Help panel on the right
-	helpPanel := tview.NewTextView().
-		SetDynamicColors(true).
-		SetWordWrap(true)
-	helpPanel.SetBorder(true).SetTitle(" " + i18n.T("help.title") + " ").SetBorderColor(tcell.ColorBlue)
+	helpPanel := NewDynamicHelpPanel()
 
 	// Function to update help text
 	updateHelp := func(label string) {
 		if key, ok := resourceLinkHelpKeys[label]; ok {
-			helpPanel.SetText(i18n.T(key))
+			helpPanel.SetHelpKey(key)
 		} else {
-			helpPanel.SetText(i18n.T("help.default"))
+			helpPanel.SetHelpKey("help.default")
 		}
 	}
 
@@ -958,7 +949,7 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	}
 	form.AddDropDown("Type", types, getDropDownIndex(types, link.Type), func(option string, index int) { updatePreview() })
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		link.Name = GetFormText(form, "Local Name")
 		link.Global = GetFormText(form, "Global Name")
 		link.Type = GetFormDropDownText(form, "Type")
@@ -985,7 +976,7 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDelete("Resource Link", link.Name, func() {
 				if err := v.contextService.DeleteResourceLink(link.Name); err != nil {
 					v.setStatus(fmt.Sprintf("[red]Error: %v[-]", err))
@@ -1001,7 +992,7 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showResourceLinkList()
 	})
 
@@ -1014,6 +1005,7 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	if isNew {
 		title = " Add Resource Link "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorPurple)
 
 	// Handle key events and update help on navigation
@@ -1047,7 +1039,7 @@ func (v *JNDIView) showResourceLinkForm(link *jndi.ResourceLink, isNew bool) {
 	layout := tview.NewFlex().
 		SetDirection(tview.FlexColumn).
 		AddItem(leftPane, 0, 2, true).
-		AddItem(helpPanel, 40, 0, false)
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("resourcelink-form", layout, true)
 	v.app.SetFocus(form)

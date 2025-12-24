@@ -256,7 +256,7 @@ func (v *LoggingView) showFileHandlerForm(handler *logging.FileHandler, isNew bo
 	})
 
 	// Save button
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if h.Prefix == "" {
 			v.setStatus("Error: Prefix is required")
 			return
@@ -276,14 +276,14 @@ func (v *LoggingView) showFileHandlerForm(handler *logging.FileHandler, isNew bo
 
 	// Delete button (only for existing)
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.configService.RemoveFileHandler(handler.Prefix)
 			v.setStatus("File handler deleted: " + handler.Prefix)
 			v.showFileHandlerList()
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showFileHandlerList()
 	})
 
@@ -291,6 +291,7 @@ func (v *LoggingView) showFileHandlerForm(handler *logging.FileHandler, isNew bo
 	if !isNew {
 		title = " Edit File Handler: " + handler.Prefix + " "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -342,16 +343,17 @@ func (v *LoggingView) showConsoleHandlerForm() {
 		h.Encoding = text
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		v.configService.SetConsoleHandler(&h)
 		v.setStatus("Console handler configuration saved")
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Console Handler Configuration ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -522,7 +524,7 @@ func (v *LoggingView) showLoggerForm(logger *logging.Logger, isNew bool) {
 	availableHandlers = append(availableHandlers, logging.HandlerConsoleHandler)
 	form.AddTextView("Available Handlers", strings.Join(availableHandlers, "\n"), 60, 4, true, false)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		if l.Name == "" {
 			v.setStatus("Error: Logger name is required")
 			return
@@ -539,14 +541,14 @@ func (v *LoggingView) showLoggerForm(logger *logging.Logger, isNew bool) {
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.configService.RemoveLogger(logger.Name)
 			v.setStatus("Logger deleted: " + logger.Name)
 			v.showLoggerList()
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showLoggerList()
 	})
 
@@ -554,6 +556,7 @@ func (v *LoggingView) showLoggerForm(logger *logging.Logger, isNew bool) {
 	if !isNew {
 		title = " Edit Logger "
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title)
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -594,7 +597,7 @@ func (v *LoggingView) showRootLoggerForm() {
 		})
 	}
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		var newHandlers []string
 		for _, h := range allHandlers {
 			if selectedHandlers[h] {
@@ -606,10 +609,11 @@ func (v *LoggingView) showRootLoggerForm() {
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Root Logger Handlers ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

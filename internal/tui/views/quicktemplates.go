@@ -173,7 +173,7 @@ improve throughput for I/O-bound applications.
 		})
 	}
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		// Create virtual thread executor
 		executor := server.NewVirtualThreadExecutor(executorName)
 		executor.NamePrefix = namePrefix
@@ -204,10 +204,11 @@ improve throughput for I/O-bound applications.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Virtual Thread Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -256,7 +257,7 @@ This template creates an HTTPS connector with SSL/TLS.
 		keystoreTypeIdx = index
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		// Create HTTPS connector
@@ -292,10 +293,11 @@ This template creates an HTTPS connector with SSL/TLS.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" HTTPS Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -349,7 +351,7 @@ Tune thread pool settings for better performance.
 		connectionTimeout = text
 	})
 
-	form.AddButton("Apply to All HTTP Connectors", func() {
+	form.AddButton("[white:green]Apply to All HTTP Connectors[-:-]", func() {
 		maxT := parsePort(maxThreads)
 		minS := parsePort(minSpareThreads)
 		accC := parsePort(acceptCount)
@@ -377,10 +379,11 @@ Tune thread pool settings for better performance.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Connection Pool Tuning ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -418,7 +421,7 @@ Enable response compression for text-based content.
 		minSize = text
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		minS := parsePort(minSize)
 
 		// Update all HTTP connectors with compression settings
@@ -442,10 +445,11 @@ Enable response compression for text-based content.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Gzip Compression ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -491,7 +495,7 @@ Configure access logging for HTTP requests.
 		suffix = text
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		// Create access log valve
@@ -520,10 +524,11 @@ Configure access logging for HTTP requests.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Access Log Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -568,7 +573,7 @@ Apply security best practices to your Tomcat configuration.
 		addSecurityListener = checked
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		// Disable shutdown port
@@ -621,10 +626,11 @@ Apply security best practices to your Tomcat configuration.
 		v.showMainMenu()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Security Hardening ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -701,7 +707,7 @@ Configure AJP connector for Apache httpd reverse proxy.
 		addRemoteIpValve = checked
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		// Create AJP connector
@@ -758,10 +764,11 @@ Configure AJP connector for Apache httpd reverse proxy.
 		v.showApacheConfigExample(ajpPort, secret)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Apache httpd (AJP) Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -880,7 +887,7 @@ Configure Tomcat for nginx proxy_pass.
 		enableProxyProtocol = checked
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		if len(cfg.Services) > 0 {
@@ -926,10 +933,11 @@ Configure Tomcat for nginx proxy_pass.
 		v.showNginxConfigExample(port)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" nginx Reverse Proxy Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -1084,7 +1092,7 @@ Configure Tomcat for HAProxy load balancing.
 		internalProxies = text
 	})
 
-	form.AddButton("Apply Template", func() {
+	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
 
 		if len(cfg.Services) > 0 {
@@ -1130,10 +1138,11 @@ Configure Tomcat for HAProxy load balancing.
 		v.showHAProxyConfigExample(port, jvmRoute, enableStickySession)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showMainMenu()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" HAProxy Load Balancer Template ")
 
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {

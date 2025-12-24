@@ -10,6 +10,82 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Help key arrays for each valve type form (indexed by form item order)
+var accessLogValveHelpKeys = []string{
+	"help.valve.classname",                // 0: Type (TextView)
+	"help.valve.accesslog.directory",      // 1: Directory
+	"help.valve.accesslog.prefix",         // 2: Prefix
+	"help.valve.accesslog.suffix",         // 3: Suffix
+	"help.valve.accesslog.pattern",        // 4: Pattern
+	"help.valve.accesslog.filedateformat", // 5: File Date Format
+	"help.valve.accesslog.rotate",         // 6: Rotatable
+	"help.valve.accesslog.renameonrotate", // 7: Rename On Rotate
+	"help.valve.accesslog.encoding",       // 8: Encoding
+	"help.valve.accesslog.buffered",       // 9: Buffered
+	"help.valve.accesslog.conditionif",    // 10: Condition If
+	"help.valve.accesslog.conditionunless", // 11: Condition Unless
+}
+
+var remoteAddrValveHelpKeys = []string{
+	"help.valve.classname",              // 0: Type (TextView)
+	"help.valve.remoteaddr.allow",       // 1: Allow (regex)
+	"help.valve.remoteaddr.deny",        // 2: Deny (regex)
+	"help.valve.remoteaddr.denystatus",  // 3: Deny Status
+	"help.valve.remoteaddr.addport",     // 4: Add Connector Port
+	"help.valve.remoteaddr.invalidauth", // 5: Invalid Auth When Deny
+}
+
+var remoteIpValveHelpKeys = []string{
+	"help.valve.classname",                // 0: Type (TextView)
+	"help.valve.remoteip.header",          // 1: Remote IP Header
+	"help.valve.remoteip.protocolheader",  // 2: Protocol Header
+	"help.valve.remoteip.protocolhttps",   // 3: Protocol Header HTTPS Value
+	"help.valve.remoteip.portheader",      // 4: Port Header
+	"help.valve.remoteip.internalproxies", // 5: Internal Proxies
+	"help.valve.remoteip.trustedproxies",  // 6: Trusted Proxies
+	"help.valve.remoteip.changelocalport", // 7: Change Local Port
+	"help.valve.remoteip.changelocalname", // 8: Change Local Name
+}
+
+var errorReportValveHelpKeys = []string{
+	"help.valve.classname",              // 0: Type (TextView)
+	"help.valve.errorreport.serverinfo", // 1: Show Server Info
+	"help.valve.errorreport.report",     // 2: Show Report
+}
+
+var singleSignOnValveHelpKeys = []string{
+	"help.valve.classname",            // 0: Type (TextView)
+	"help.valve.sso.cookiedomain",     // 1: Cookie Domain
+	"help.valve.sso.cookiename",       // 2: Cookie Name
+	"help.valve.sso.requirereauth",    // 3: Require Reauthentication
+}
+
+var stuckThreadValveHelpKeys = []string{
+	"help.valve.classname",                 // 0: Type (TextView)
+	"help.valve.stuckthread.threshold",     // 1: Threshold (seconds)
+	"help.valve.stuckthread.interruptthreshold", // 2: Interrupt Thread Threshold
+}
+
+var crawlerValveHelpKeys = []string{
+	"help.valve.classname",                    // 0: Type (TextView)
+	"help.valve.crawler.useragents",           // 1: Crawler User Agents
+	"help.valve.crawler.sessioninactiveinterval", // 2: Session Inactive Interval
+}
+
+var semaphoreValveHelpKeys = []string{
+	"help.valve.classname",         // 0: Type (TextView)
+	"help.valve.semaphore.concurrency", // 1: Concurrency
+	"help.valve.semaphore.fairness",    // 2: Fairness
+	"help.valve.semaphore.block",       // 3: Block
+}
+
+var replicationValveHelpKeys = []string{
+	"help.valve.classname",                 // 0: Type (TextView)
+	"help.valve.replication.filter",        // 1: Filter
+	"help.valve.replication.primaryindicator", // 2: Primary Indicator
+	"help.valve.replication.primaryindicatorname", // 3: Primary Indicator Name
+}
+
 // ValveView handles valve configuration
 type ValveView struct {
 	app           *tview.Application
@@ -73,7 +149,7 @@ func (v *ValveView) showMainMenu() {
 		})
 
 	menu.AddItem("", "", 0, nil)
-	menu.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 0, func() {
+	menu.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 0, func() {
 		v.onReturn()
 	})
 
@@ -155,7 +231,7 @@ func (v *ValveView) showQuickAddMenu() {
 		})
 
 	menu.AddItem("", "", 0, nil)
-	menu.AddItem("[red]Back[-]", "Return to valve menu", 0, func() {
+	menu.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to valve menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -203,7 +279,7 @@ func (v *ValveView) showHostSelector() {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to valve menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to valve menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -239,7 +315,7 @@ func (v *ValveView) showContextHostSelector() {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to valve menu", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to valve menu", 0, func() {
 		v.showMainMenu()
 	})
 
@@ -273,7 +349,7 @@ func (v *ValveView) showContextSelector(host *server.Host) {
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to host selector", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to host selector", 0, func() {
 		v.showContextHostSelector()
 	})
 
@@ -310,7 +386,7 @@ func (v *ValveView) showValveList(valves []server.Valve, title, scope string, ho
 	list.AddItem("[green]► Add Valve[-]", "Add new valve", 'a', func() {
 		v.showValveTypeSelector(scope, host, ctx)
 	})
-	list.AddItem("[red]Back[-]", "Return", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return", 0, func() {
 		v.returnFromValveList(scope, host)
 	})
 
@@ -376,7 +452,7 @@ func (v *ValveView) showValveTypeSelector(scope string, host *server.Host, ctx *
 	}
 
 	list.AddItem("", "", 0, nil)
-	list.AddItem("[red]Back[-]", "Return to valve list", 0, func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to valve list", 0, func() {
 		v.showValveListForScope(scope, host, ctx)
 	})
 
@@ -421,7 +497,8 @@ func (v *ValveView) showValveListForScope(scope string, host *server.Host, ctx *
 // showValveForm shows the valve edit form
 func (v *ValveView) showValveForm(valve *server.Valve, isNew bool, scope string, host *server.Host, ctx *server.Context) {
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
+	helpPanel := NewDynamicHelpPanel()
+	previewPanel := NewPreviewPanel()
 
 	// Show valve type
 	valveName := server.GetValveShortName(valve.ClassName)
@@ -431,47 +508,63 @@ func (v *ValveView) showValveForm(valve *server.Valve, isNew bool, scope string,
 	updatePreview := func() {
 		tempValve := *valve
 		v.readValveFromForm(form, &tempValve)
-		preview.SetXMLPreview(GenerateValveXML(&tempValve))
+		previewPanel.SetXMLPreview(GenerateValveXML(&tempValve))
 	}
 
-	// Show form fields based on valve type
+	// Determine which help keys to use based on valve type
+	var helpKeys []string
 	switch valve.ClassName {
 	case server.ValveAccessLog, server.ValveExtendedAccessLog:
+		helpKeys = accessLogValveHelpKeys
 		v.addAccessLogFields(form, valve, updatePreview)
 	case server.ValveRemoteAddr, server.ValveRemoteCIDR, server.ValveRemoteHost:
+		helpKeys = remoteAddrValveHelpKeys
 		v.addRemoteAddrFields(form, valve, updatePreview)
 	case server.ValveRemoteIp:
+		helpKeys = remoteIpValveHelpKeys
 		v.addRemoteIpFields(form, valve, updatePreview)
 	case server.ValveErrorReport:
+		helpKeys = errorReportValveHelpKeys
 		v.addErrorReportFields(form, valve, updatePreview)
 	case server.ValveSingleSignOn:
+		helpKeys = singleSignOnValveHelpKeys
 		v.addSingleSignOnFields(form, valve, updatePreview)
 	case server.ValveStuckThreadDetection:
+		helpKeys = stuckThreadValveHelpKeys
 		v.addStuckThreadFields(form, valve, updatePreview)
 	case server.ValveCrawlerSessionManager:
+		helpKeys = crawlerValveHelpKeys
 		v.addCrawlerFields(form, valve, updatePreview)
 	case server.ValveSemaphore:
+		helpKeys = semaphoreValveHelpKeys
 		v.addSemaphoreFields(form, valve, updatePreview)
 	case server.ValveReplication:
+		helpKeys = replicationValveHelpKeys
 		v.addReplicationFields(form, valve, updatePreview)
 	default:
 		// Generic valve - just show class name
+		helpKeys = []string{"help.valve.classname"}
 		form.AddInputField("Class Name", valve.ClassName, 60, nil, func(text string) {
 			updatePreview()
 		})
 	}
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	// Initialize help with first item
+	if len(helpKeys) > 0 {
+		helpPanel.SetHelpKey(helpKeys[0])
+	}
+
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		v.saveValveFromForm(form, valve, isNew, scope, host, ctx)
 	})
 
 	if !isNew {
-		form.AddButton(i18n.T("common.delete"), func() {
+		form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 			v.confirmDeleteValve(valve, scope, host, ctx)
 		})
 	}
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showValveListForScope(scope, host, ctx)
 	})
 
@@ -479,11 +572,27 @@ func (v *ValveView) showValveForm(valve *server.Valve, isNew bool, scope string,
 	if isNew {
 		title = fmt.Sprintf(" Add %s ", valveName)
 	}
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(title).SetBorderColor(tcell.ColorGreen)
+
+	// Update help panel on navigation
 	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showValveListForScope(scope, host, ctx)
 			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(helpKeys) {
+						helpPanel.SetHelpKey(helpKeys[idx])
+					}
+				})
+			}()
 		}
 		return event
 	})
@@ -491,11 +600,15 @@ func (v *ValveView) showValveForm(valve *server.Valve, isNew bool, scope string,
 	// Initial preview
 	updatePreview()
 
-	// Create layout with form and preview
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
+
+	layout := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
 
 	v.pages.AddAndSwitchToPage("valve-form", layout, true)
 	v.app.SetFocus(form)

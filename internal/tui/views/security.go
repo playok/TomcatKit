@@ -11,6 +11,47 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Help key arrays for realm forms
+var userDatabaseRealmHelpKeys = []string{
+	"help.realm.userdatabase.resource", // 0: Resource Name
+}
+
+var dataSourceRealmHelpKeys = []string{
+	"help.realm.datasource.name",       // 0: DataSource Name
+	"help.realm.datasource.usertable",  // 1: User Table
+	"help.realm.datasource.usernameCol", // 2: User Name Column
+	"help.realm.datasource.passwordCol", // 3: User Credential Column
+	"help.realm.datasource.roletable",  // 4: User Role Table
+	"help.realm.datasource.rolenameCol", // 5: Role Name Column
+}
+
+var jndiRealmHelpKeys = []string{
+	"help.realm.jndi.connectionURL",  // 0: Connection URL
+	"help.realm.jndi.connectionName", // 1: Connection Name
+	"help.realm.jndi.connectionPwd",  // 2: Connection Password
+	"help.realm.jndi.userpattern",    // 3: User Pattern
+	"help.realm.jndi.userbase",       // 4: User Base
+	"help.realm.jndi.usersearch",     // 5: User Search
+	"help.realm.jndi.rolebase",       // 6: Role Base
+	"help.realm.jndi.rolename",       // 7: Role Name
+	"help.realm.jndi.rolesearch",     // 8: Role Search
+}
+
+var genericRealmHelpKeys = []string{
+	"help.realm.classname", // 0: Class Name
+}
+
+var userFormHelpKeys = []string{
+	"help.user.username", // 0: Username
+	"help.user.password", // 1: Password
+	"help.user.roles",    // 2: Roles
+}
+
+var roleFormHelpKeys = []string{
+	"help.role.name",        // 0: Role Name
+	"help.role.description", // 1: Description
+}
+
 // SecurityView handles security and realm configuration UI
 type SecurityView struct {
 	app           *tview.Application
@@ -72,7 +113,7 @@ func (v *SecurityView) Show() {
 		func() { v.showCredentialHandler() },
 	)
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', v.onBack)
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', v.onBack)
 
 	// Update help panel when selection changes
 	list.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -124,7 +165,7 @@ func (v *SecurityView) showRealmConfig() {
 		realmDesc := realm.GetRealmDescription(currentRealm.ClassName)
 
 		list.AddItem(
-			fmt.Sprintf("[green]"+i18n.T("security.realm.current")+": %s[-]", realmName),
+			fmt.Sprintf("[white:green]"+i18n.T("security.realm.current")+": %s[-]", realmName),
 			realmDesc,
 			0,
 			func() { v.showRealmDetail(currentRealm, 0) },
@@ -161,7 +202,7 @@ func (v *SecurityView) showRealmConfig() {
 	removeRealmIndex := -1
 	if currentRealm != nil {
 		removeRealmIndex = menuIndex
-		list.AddItem("[red]"+i18n.T("security.realm.remove")+"[-]", i18n.T("security.realm.remove.desc"), 'd', func() {
+		list.AddItem("[white:red]"+i18n.T("security.realm.remove")+"[-]", i18n.T("security.realm.remove.desc"), 'd', func() {
 			v.showConfirm(i18n.T("security.realm.remove"), i18n.T("security.realm.remove.confirm"), func(confirmed bool) {
 				if confirmed {
 					srv.Services[0].Engine.Realm = nil
@@ -178,7 +219,7 @@ func (v *SecurityView) showRealmConfig() {
 		menuIndex++
 	}
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.Show()
 	})
 
@@ -232,7 +273,7 @@ func (v *SecurityView) showRealmTypeSelector() {
 		_ = idx // used for help panel logic
 	}
 
-	list.AddItem("[red]"+i18n.T("common.cancel")+"[-]", i18n.T("common.return"), 0, func() {
+	list.AddItem("[white:red]"+i18n.T("common.cancel")+"[-]", i18n.T("common.return"), 0, func() {
 		v.showRealmConfig()
 	})
 
@@ -328,22 +369,28 @@ func (v *SecurityView) showRealmDetail(r *server.Realm, serviceIndex int) {
 
 // showUserDatabaseRealmForm shows UserDatabaseRealm configuration form
 func (v *SecurityView) showUserDatabaseRealmForm(r *server.Realm, isNew bool) {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(userDatabaseRealmHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempRealm := server.Realm{
 			ClassName:    r.ClassName,
 			ResourceName: form.GetFormItem(0).(*tview.InputField).GetText(),
 		}
-		preview.SetXMLPreview(GenerateRealmXML(&tempRealm))
+		previewPanel.SetXMLPreview(GenerateRealmXML(&tempRealm))
 	}
 
 	form.AddInputField("Resource Name", r.ResourceName, 30, nil, func(text string) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		r.ResourceName = form.GetFormItem(0).(*tview.InputField).GetText()
 
 		if isNew {
@@ -360,29 +407,62 @@ func (v *SecurityView) showUserDatabaseRealmForm(r *server.Realm, isNew bool) {
 		v.showRealmConfig()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRealmConfig()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" UserDatabaseRealm ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRealmConfig()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(userDatabaseRealmHelpKeys) {
+						helpPanel.SetHelpKey(userDatabaseRealmHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	layout.SetBorder(true).SetTitle(" UserDatabaseRealm ")
-	v.pages.AddAndSwitchToPage("userdatabase-realm-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("userdatabase-realm-form", flex, true)
 	v.app.SetFocus(form)
 }
 
 // showDataSourceRealmForm shows DataSourceRealm configuration form
 func (v *SecurityView) showDataSourceRealmForm(r *server.Realm, isNew bool) {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(dataSourceRealmHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempRealm := server.Realm{
@@ -394,7 +474,7 @@ func (v *SecurityView) showDataSourceRealmForm(r *server.Realm, isNew bool) {
 			UserRoleTable:  form.GetFormItem(4).(*tview.InputField).GetText(),
 			RoleNameCol:    form.GetFormItem(5).(*tview.InputField).GetText(),
 		}
-		preview.SetXMLPreview(GenerateRealmXML(&tempRealm))
+		previewPanel.SetXMLPreview(GenerateRealmXML(&tempRealm))
 	}
 
 	form.AddInputField("DataSource Name", r.DataSourceName, 40, nil, func(text string) {
@@ -416,7 +496,7 @@ func (v *SecurityView) showDataSourceRealmForm(r *server.Realm, isNew bool) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		r.DataSourceName = form.GetFormItem(0).(*tview.InputField).GetText()
 		r.UserTable = form.GetFormItem(1).(*tview.InputField).GetText()
 		r.UserNameCol = form.GetFormItem(2).(*tview.InputField).GetText()
@@ -438,28 +518,62 @@ func (v *SecurityView) showDataSourceRealmForm(r *server.Realm, isNew bool) {
 		v.showRealmConfig()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRealmConfig()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" DataSourceRealm ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRealmConfig()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(dataSourceRealmHelpKeys) {
+						helpPanel.SetHelpKey(dataSourceRealmHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("datasource-realm-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("datasource-realm-form", flex, true)
 	v.app.SetFocus(form)
 }
 
 // showJNDIRealmForm shows JNDIRealm (LDAP) configuration form
 func (v *SecurityView) showJNDIRealmForm(r *server.Realm, isNew bool) {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(jndiRealmHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempRealm := server.Realm{
@@ -474,7 +588,7 @@ func (v *SecurityView) showJNDIRealmForm(r *server.Realm, isNew bool) {
 			RoleName:           form.GetFormItem(7).(*tview.InputField).GetText(),
 			RoleSearch:         form.GetFormItem(8).(*tview.InputField).GetText(),
 		}
-		preview.SetXMLPreview(GenerateRealmXML(&tempRealm))
+		previewPanel.SetXMLPreview(GenerateRealmXML(&tempRealm))
 	}
 
 	form.AddInputField("Connection URL", r.ConnectionURL, 50, nil, func(text string) {
@@ -505,7 +619,7 @@ func (v *SecurityView) showJNDIRealmForm(r *server.Realm, isNew bool) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		r.ConnectionURL = form.GetFormItem(0).(*tview.InputField).GetText()
 		r.ConnectionName = form.GetFormItem(1).(*tview.InputField).GetText()
 		r.ConnectionPassword = form.GetFormItem(2).(*tview.InputField).GetText()
@@ -530,21 +644,49 @@ func (v *SecurityView) showJNDIRealmForm(r *server.Realm, isNew bool) {
 		v.showRealmConfig()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRealmConfig()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" JNDIRealm (LDAP) ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRealmConfig()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(jndiRealmHelpKeys) {
+						helpPanel.SetHelpKey(jndiRealmHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("jndi-realm-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("jndi-realm-form", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -577,7 +719,7 @@ func (v *SecurityView) showWrapperRealmForm(r *server.Realm) {
 		v.showAddNestedRealmSelector(r)
 	})
 
-	list.AddItem("[red]Back[-]", "Return to realm config", 'b', func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to realm config", 'b', func() {
 		v.showRealmConfig()
 	})
 
@@ -662,7 +804,7 @@ func (v *SecurityView) editNestedRealm(parentRealm *server.Realm, index int) {
 		})
 	})
 
-	list.AddItem("[red]Back[-]", "Return", 'b', func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return", 'b', func() {
 		v.showWrapperRealmForm(parentRealm)
 	})
 
@@ -689,21 +831,27 @@ func (v *SecurityView) showNestedRealmDetail(index int) {
 
 // showGenericRealmForm shows a generic realm form
 func (v *SecurityView) showGenericRealmForm(r *server.Realm) {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(genericRealmHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
 		tempRealm := server.Realm{
 			ClassName: form.GetFormItem(0).(*tview.InputField).GetText(),
 		}
-		preview.SetXMLPreview(GenerateRealmXML(&tempRealm))
+		previewPanel.SetXMLPreview(GenerateRealmXML(&tempRealm))
 	}
 
 	form.AddInputField("Class Name", r.ClassName, 60, nil, func(text string) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		r.ClassName = form.GetFormItem(0).(*tview.InputField).GetText()
 		if err := v.configService.Save(); err != nil {
 			v.showError(fmt.Sprintf("Failed to save: %v", err))
@@ -713,21 +861,49 @@ func (v *SecurityView) showGenericRealmForm(r *server.Realm) {
 		v.showRealmConfig()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRealmConfig()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Realm Configuration ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRealmConfig()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(genericRealmHelpKeys) {
+						helpPanel.SetHelpKey(genericRealmHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("generic-realm-form", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("generic-realm-form", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -755,7 +931,7 @@ func (v *SecurityView) showCredentialHandler() {
 	form.AddInputField("Iterations", strconv.Itoa(r.CredentialHandler.Iterations), 10, acceptDigits, nil)
 	form.AddInputField("Salt Length", strconv.Itoa(r.CredentialHandler.SaltLength), 10, acceptDigits, nil)
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		_, r.CredentialHandler.ClassName = form.GetFormItem(0).(*tview.DropDown).GetCurrentOption()
 		_, r.CredentialHandler.Algorithm = form.GetFormItem(1).(*tview.DropDown).GetCurrentOption()
 		r.CredentialHandler.Iterations, _ = strconv.Atoi(form.GetFormItem(2).(*tview.InputField).GetText())
@@ -769,7 +945,7 @@ func (v *SecurityView) showCredentialHandler() {
 		v.Show()
 	})
 
-	form.AddButton(i18n.T("common.remove"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.remove")+"[-:-]", func() {
 		r.CredentialHandler = nil
 		if err := v.configService.Save(); err != nil {
 			v.showError(fmt.Sprintf("Failed to save: %v", err))
@@ -779,10 +955,11 @@ func (v *SecurityView) showCredentialHandler() {
 		v.Show()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.Show()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Credential Handler (Password Hashing) ").SetBorderColor(tcell.ColorDarkCyan)
 
 	helpText := tview.NewTextView().
@@ -831,7 +1008,7 @@ func (v *SecurityView) showUsersConfig() {
 		func() { v.showRolesList() },
 	)
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.Show()
 	})
 
@@ -880,7 +1057,7 @@ func (v *SecurityView) showUsersList() {
 		v.showAddUser()
 	})
 
-	list.AddItem("[red]Back[-]", "Return to users config", 'b', func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to users config", 'b', func() {
 		v.showUsersConfig()
 	})
 
@@ -896,11 +1073,17 @@ func (v *SecurityView) showUserDetail(username string) {
 		return
 	}
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(userFormHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
-		preview.SetXMLPreview(GenerateUserXML(
+		previewPanel.SetXMLPreview(GenerateUserXML(
 			form.GetFormItem(0).(*tview.InputField).GetText(),
 			form.GetFormItem(1).(*tview.InputField).GetText(),
 			form.GetFormItem(2).(*tview.InputField).GetText(),
@@ -917,7 +1100,7 @@ func (v *SecurityView) showUserDetail(username string) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		newUsername := form.GetFormItem(0).(*tview.InputField).GetText()
 		user.Username = newUsername
 		user.Password = form.GetFormItem(1).(*tview.InputField).GetText()
@@ -936,7 +1119,7 @@ func (v *SecurityView) showUserDetail(username string) {
 		v.showUsersList()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm("Delete User", fmt.Sprintf("Delete user '%s'?", username), func(confirmed bool) {
 			if confirmed {
 				if err := v.usersService.DeleteUser(username); err != nil {
@@ -953,32 +1136,65 @@ func (v *SecurityView) showUserDetail(username string) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showUsersList()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" User: %s ", username)).SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showUsersList()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(userFormHelpKeys) {
+						helpPanel.SetHelpKey(userFormHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	layout.SetBorder(true).SetTitle(fmt.Sprintf(" User: %s ", username))
-	v.pages.AddAndSwitchToPage("user-detail", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("user-detail", flex, true)
 	v.app.SetFocus(form)
 }
 
 // showAddUser shows add user form
 func (v *SecurityView) showAddUser() {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(userFormHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
-		preview.SetXMLPreview(GenerateUserXML(
+		previewPanel.SetXMLPreview(GenerateUserXML(
 			form.GetFormItem(0).(*tview.InputField).GetText(),
 			form.GetFormItem(1).(*tview.InputField).GetText(),
 			form.GetFormItem(2).(*tview.InputField).GetText(),
@@ -995,7 +1211,7 @@ func (v *SecurityView) showAddUser() {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		user := realm.User{
 			Username: form.GetFormItem(0).(*tview.InputField).GetText(),
 			Password: form.GetFormItem(1).(*tview.InputField).GetText(),
@@ -1020,22 +1236,49 @@ func (v *SecurityView) showAddUser() {
 		v.showUsersList()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showUsersList()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Add User ").SetBorderColor(tcell.ColorGreen)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showUsersList()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(userFormHelpKeys) {
+						helpPanel.SetHelpKey(userFormHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	layout.SetBorder(true).SetTitle(" Add User ")
-	v.pages.AddAndSwitchToPage("add-user", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("add-user", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -1066,7 +1309,7 @@ func (v *SecurityView) showRolesList() {
 		v.showAddCommonRoles()
 	})
 
-	list.AddItem("[red]Back[-]", "Return to users config", 'b', func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to users config", 'b', func() {
 		v.showUsersConfig()
 	})
 
@@ -1082,11 +1325,17 @@ func (v *SecurityView) showRoleDetail(roleName string) {
 		return
 	}
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(roleFormHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
-		preview.SetXMLPreview(GenerateRoleXML(
+		previewPanel.SetXMLPreview(GenerateRoleXML(
 			form.GetFormItem(0).(*tview.InputField).GetText(),
 			form.GetFormItem(1).(*tview.InputField).GetText(),
 		))
@@ -1099,7 +1348,7 @@ func (v *SecurityView) showRoleDetail(roleName string) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save.short"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save.short")+"[-:-]", func() {
 		// Delete old role and add new one if name changed
 		newRoleName := form.GetFormItem(0).(*tview.InputField).GetText()
 		if newRoleName != roleName {
@@ -1120,7 +1369,7 @@ func (v *SecurityView) showRoleDetail(roleName string) {
 		v.showRolesList()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm("Delete Role", fmt.Sprintf("Delete role '%s'?", roleName), func(confirmed bool) {
 			if confirmed {
 				if err := v.usersService.DeleteRole(roleName); err != nil {
@@ -1137,31 +1386,65 @@ func (v *SecurityView) showRoleDetail(roleName string) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRolesList()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(fmt.Sprintf(" Role: %s ", roleName)).SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRolesList()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(roleFormHelpKeys) {
+						helpPanel.SetHelpKey(roleFormHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("role-detail", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("role-detail", flex, true)
 	v.app.SetFocus(form)
 }
 
 // showAddRole shows add role form
 func (v *SecurityView) showAddRole() {
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(roleFormHelpKeys[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	updatePreview := func() {
-		preview.SetXMLPreview(GenerateRoleXML(
+		previewPanel.SetXMLPreview(GenerateRoleXML(
 			form.GetFormItem(0).(*tview.InputField).GetText(),
 			form.GetFormItem(1).(*tview.InputField).GetText(),
 		))
@@ -1174,7 +1457,7 @@ func (v *SecurityView) showAddRole() {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		role := realm.Role{
 			RoleName:    form.GetFormItem(0).(*tview.InputField).GetText(),
 			Description: form.GetFormItem(1).(*tview.InputField).GetText(),
@@ -1198,21 +1481,49 @@ func (v *SecurityView) showAddRole() {
 		v.showRolesList()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showRolesList()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Add Role ").SetBorderColor(tcell.ColorGreen)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showRolesList()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(roleFormHelpKeys) {
+						helpPanel.SetHelpKey(roleFormHelpKeys[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("add-role", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("add-role", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -1259,7 +1570,7 @@ func (v *SecurityView) showAddCommonRoles() {
 		v.showRolesList()
 	})
 
-	list.AddItem("[red]Back[-]", "Return to roles list", 'b', func() {
+	list.AddItem("[-:-:-] [white:red] Back [-:-:-]", "Return to roles list", 'b', func() {
 		v.showRolesList()
 	})
 

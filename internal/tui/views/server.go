@@ -10,6 +10,28 @@ import (
 	"github.com/rivo/tview"
 )
 
+// Help key arrays for server forms (indexed by form item order)
+var serverSettingsHelpKeysByIndex = []string{
+	"help.server.port",     // 0: Shutdown Port
+	"help.server.shutdown", // 1: Shutdown Command
+}
+
+var listenerFormHelpKeysByIndex = []string{
+	"help.server.listener.classname", // 0: Class Name
+	"help.server.listener.sslengine", // 1: SSL Engine (conditional)
+	"help.server.listener.sslseed",   // 2: SSL Random Seed (conditional)
+}
+
+var serviceFormHelpKeysByIndex = []string{
+	"help.server.service.name", // 0: Service Name
+}
+
+var engineFormHelpKeysByIndex = []string{
+	"help.server.engine.name",        // 0: Engine Name
+	"help.server.engine.defaulthost", // 1: Default Host
+	"help.server.engine.jvmroute",    // 2: JVM Route
+}
+
 // ServerView handles server configuration UI
 type ServerView struct {
 	app           *tview.Application
@@ -80,7 +102,7 @@ func (v *ServerView) Show() {
 		func() { v.showGlobalResources() },
 	)
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', v.onBack)
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', v.onBack)
 
 	// Update help panel when selection changes
 	list.SetChangedFunc(func(index int, mainText string, secondaryText string, shortcut rune) {
@@ -116,8 +138,14 @@ func (v *ServerView) Show() {
 func (v *ServerView) showServerSettings() {
 	srv := v.configService.GetServer()
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(serverSettingsHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	// Function to update preview
 	updatePreview := func() {
@@ -131,7 +159,7 @@ func (v *ServerView) showServerSettings() {
 		}
 		tempSrv.Shutdown = form.GetFormItem(1).(*tview.InputField).GetText()
 
-		preview.SetXMLPreview(GenerateServerXML(&tempSrv))
+		previewPanel.SetXMLPreview(GenerateServerXML(&tempSrv))
 	}
 
 	form.AddInputField(i18n.T("server.port"), strconv.Itoa(srv.Port), 10, func(text string, lastChar rune) bool {
@@ -144,7 +172,7 @@ func (v *ServerView) showServerSettings() {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		portStr := form.GetFormItem(0).(*tview.InputField).GetText()
 		shutdown := form.GetFormItem(1).(*tview.InputField).GetText()
 
@@ -166,22 +194,49 @@ func (v *ServerView) showServerSettings() {
 		v.Show()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.Show()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.settings") + " ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.Show()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(serverSettingsHelpKeysByIndex) {
+						helpPanel.SetHelpKey(serverSettingsHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	// Create layout with form on top and preview on bottom
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("server-settings", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("server-settings", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -203,11 +258,11 @@ func (v *ServerView) showListeners() {
 		)
 	}
 
-	list.AddItem("[green]"+i18n.T("server.listener.add")+"[-]", i18n.T("server.globalresource.add.desc"), 'a', func() {
+	list.AddItem("[white:green]"+i18n.T("server.listener.add")+"[-]", i18n.T("server.globalresource.add.desc"), 'a', func() {
 		v.showAddListener()
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.Show()
 	})
 
@@ -224,8 +279,14 @@ func (v *ServerView) showListenerDetail(index int) {
 	}
 	listener := listeners[index]
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(listenerFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	hasSSLEngine := listener.SSLEngine != ""
 	hasSSLSeed := listener.SSLRandomSeed != ""
@@ -248,7 +309,7 @@ func (v *ServerView) showListenerDetail(index int) {
 			tempListener.SSLRandomSeed = form.GetFormItem(fieldIdx).(*tview.InputField).GetText()
 		}
 
-		preview.SetXMLPreview(GenerateListenerXML(&tempListener))
+		previewPanel.SetXMLPreview(GenerateListenerXML(&tempListener))
 	}
 
 	form.AddInputField(i18n.T("server.listener.classname"), listener.ClassName, 60, nil, func(text string) {
@@ -267,7 +328,7 @@ func (v *ServerView) showListenerDetail(index int) {
 		})
 	}
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		className := form.GetFormItem(0).(*tview.InputField).GetText()
 		listeners[index].ClassName = className
 
@@ -280,7 +341,7 @@ func (v *ServerView) showListenerDetail(index int) {
 		v.showListeners()
 	})
 
-	form.AddButton(i18n.T("server.listener.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("server.listener.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("server.listener.delete"), i18n.T("server.confirm.delete"), func(confirmed bool) {
 			if confirmed {
 				v.configService.RemoveListener(index)
@@ -294,22 +355,60 @@ func (v *ServerView) showListenerDetail(index int) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showListeners()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.listener.detail") + " ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showListeners()
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					// Map to correct help key based on conditional fields
+					helpKeyIndex := 0
+					if idx == 0 {
+						helpKeyIndex = 0 // className
+					} else if idx == 1 && hasSSLEngine {
+						helpKeyIndex = 1 // SSLEngine
+					} else if idx == 1 && hasSSLSeed && !hasSSLEngine {
+						helpKeyIndex = 2 // SSLRandomSeed
+					} else if idx == 2 && hasSSLSeed {
+						helpKeyIndex = 2 // SSLRandomSeed
+					}
+					if helpKeyIndex < len(listenerFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(listenerFormHelpKeysByIndex[helpKeyIndex])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	// Create layout with form on top and preview on bottom
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("listener-detail", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("listener-detail", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -340,11 +439,11 @@ func (v *ServerView) showAddListener() {
 		})
 	}
 
-	list.AddItem("[yellow]"+i18n.T("server.listener.custom")+"[-]", i18n.T("server.listener.custom.desc"), 'c', func() {
+	list.AddItem("[black:yellow]"+i18n.T("server.listener.custom")+"[-]", i18n.T("server.listener.custom.desc"), 'c', func() {
 		v.showCustomListenerForm()
 	})
 
-	list.AddItem("[red]"+i18n.T("common.cancel")+"[-]", i18n.T("common.return"), 0, func() {
+	list.AddItem("[white:red]"+i18n.T("common.cancel")+"[-]", i18n.T("common.return"), 0, func() {
 		v.showListeners()
 	})
 
@@ -358,7 +457,7 @@ func (v *ServerView) showCustomListenerForm() {
 	form := tview.NewForm()
 	form.AddInputField(i18n.T("server.listener.classname"), "", 60, nil, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		className := form.GetFormItem(0).(*tview.InputField).GetText()
 		if className == "" {
 			v.showError(i18n.T("server.listener.classrequired"))
@@ -374,10 +473,11 @@ func (v *ServerView) showCustomListenerForm() {
 		v.showListeners()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showAddListener()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.listener.custom.title") + " ").SetBorderColor(tcell.ColorDarkCyan)
 	v.pages.AddAndSwitchToPage("custom-listener", form, true)
 	v.app.SetFocus(form)
@@ -400,7 +500,7 @@ func (v *ServerView) showServices() {
 		)
 	}
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.Show()
 	})
 
@@ -458,7 +558,7 @@ func (v *ServerView) showServiceDetail(index int) {
 		nil,
 	)
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.showServices()
 	})
 
@@ -474,8 +574,14 @@ func (v *ServerView) showEditServiceName(index int) {
 		return
 	}
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(serviceFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	// Function to update preview
 	updatePreview := func() {
@@ -483,14 +589,14 @@ func (v *ServerView) showEditServiceName(index int) {
 			Name: svc.Name,
 		}
 		tempSvc.Name = form.GetFormItem(0).(*tview.InputField).GetText()
-		preview.SetXMLPreview(GenerateServiceXML(&tempSvc))
+		previewPanel.SetXMLPreview(GenerateServiceXML(&tempSvc))
 	}
 
 	form.AddInputField(i18n.T("server.service.name"), svc.Name, 30, nil, func(text string) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		name := form.GetFormItem(0).(*tview.InputField).GetText()
 		svc.Name = name
 		v.configService.UpdateService(index, *svc)
@@ -504,22 +610,49 @@ func (v *ServerView) showEditServiceName(index int) {
 		v.showServiceDetail(index)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showServiceDetail(index)
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.service.edit") + " ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showServiceDetail(index)
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(serviceFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(serviceFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	// Create layout with form on top and preview on bottom
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("edit-service-name", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("edit-service-name", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -530,8 +663,14 @@ func (v *ServerView) showEngineSettings(serviceIndex int) {
 		return
 	}
 
+	// Create help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey(engineFormHelpKeysByIndex[0])
+
+	// Create preview panel
+	previewPanel := NewPreviewPanel()
+
 	form := tview.NewForm()
-	preview := NewPreviewPanel()
 
 	// Function to update preview
 	updatePreview := func() {
@@ -544,7 +683,7 @@ func (v *ServerView) showEngineSettings(serviceIndex int) {
 		tempEngine.DefaultHost = form.GetFormItem(1).(*tview.InputField).GetText()
 		tempEngine.JvmRoute = form.GetFormItem(2).(*tview.InputField).GetText()
 
-		preview.SetXMLPreview(GenerateEngineXML(&tempEngine))
+		previewPanel.SetXMLPreview(GenerateEngineXML(&tempEngine))
 	}
 
 	form.AddInputField(i18n.T("server.engine.name"), svc.Engine.Name, 30, nil, func(text string) {
@@ -557,7 +696,7 @@ func (v *ServerView) showEngineSettings(serviceIndex int) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		svc.Engine.Name = form.GetFormItem(0).(*tview.InputField).GetText()
 		svc.Engine.DefaultHost = form.GetFormItem(1).(*tview.InputField).GetText()
 		svc.Engine.JvmRoute = form.GetFormItem(2).(*tview.InputField).GetText()
@@ -573,22 +712,49 @@ func (v *ServerView) showEngineSettings(serviceIndex int) {
 		v.showServiceDetail(serviceIndex)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showServiceDetail(serviceIndex)
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.engine.settings") + " ").SetBorderColor(tcell.ColorDarkCyan)
+
+	// Update help panel on navigation
+	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEscape {
+			v.showServiceDetail(serviceIndex)
+			return nil
+		}
+
+		// Update help on Tab/Enter/Up/Down navigation
+		if event.Key() == tcell.KeyTab || event.Key() == tcell.KeyEnter ||
+			event.Key() == tcell.KeyUp || event.Key() == tcell.KeyDown {
+			go func() {
+				v.app.QueueUpdateDraw(func() {
+					idx, _ := form.GetFocusedItemIndex()
+					if idx >= 0 && idx < len(engineFormHelpKeysByIndex) {
+						helpPanel.SetHelpKey(engineFormHelpKeysByIndex[idx])
+					}
+				})
+			}()
+		}
+		return event
+	})
 
 	// Initial preview
 	updatePreview()
 
-	// Create layout with form on top and preview on bottom
-	layout := tview.NewFlex().
+	// Layout: left side (form top + preview bottom), right side (help)
+	leftPanel := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(form, 0, 2, true).
-		AddItem(preview, 0, 1, false)
+		AddItem(previewPanel, 0, 1, false)
 
-	v.pages.AddAndSwitchToPage("engine-settings", layout, true)
+	flex := tview.NewFlex().
+		AddItem(leftPanel, 0, 2, true).
+		AddItem(helpPanel, 0, 1, false)
+
+	v.pages.AddAndSwitchToPage("engine-settings", flex, true)
 	v.app.SetFocus(form)
 }
 
@@ -611,11 +777,11 @@ func (v *ServerView) showExecutors(serviceIndex int) {
 		)
 	}
 
-	list.AddItem("[green]"+i18n.T("server.executor.add")+"[-]", i18n.T("server.executor.add"), 'a', func() {
+	list.AddItem("[white:green]"+i18n.T("server.executor.add")+"[-]", i18n.T("server.executor.add"), 'a', func() {
 		v.showAddExecutor(serviceIndex)
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.showServiceDetail(serviceIndex)
 	})
 
@@ -679,7 +845,7 @@ func (v *ServerView) showExecutorDetail(serviceIndex, executorIndex int) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		exec.Name = form.GetFormItem(0).(*tview.InputField).GetText()
 		exec.NamePrefix = form.GetFormItem(1).(*tview.InputField).GetText()
 		exec.MaxThreads, _ = strconv.Atoi(form.GetFormItem(2).(*tview.InputField).GetText())
@@ -697,7 +863,7 @@ func (v *ServerView) showExecutorDetail(serviceIndex, executorIndex int) {
 		v.showExecutors(serviceIndex)
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("common.delete"), i18n.T("server.confirm.delete"), func(confirmed bool) {
 			if confirmed {
 				svc.Executors = append(svc.Executors[:executorIndex], svc.Executors[executorIndex+1:]...)
@@ -712,10 +878,11 @@ func (v *ServerView) showExecutorDetail(serviceIndex, executorIndex int) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showExecutors(serviceIndex)
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.executor.edit") + " ").SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview
@@ -745,7 +912,7 @@ func (v *ServerView) showAddExecutor(serviceIndex int) {
 	form.AddInputField(i18n.T("server.executor.minthreads"), "25", 10, acceptDigits, nil)
 	form.AddInputField(i18n.T("server.executor.maxidle"), "60000", 10, acceptDigits, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		maxThreads, _ := strconv.Atoi(form.GetFormItem(2).(*tview.InputField).GetText())
 		minSpare, _ := strconv.Atoi(form.GetFormItem(3).(*tview.InputField).GetText())
 		maxIdle, _ := strconv.Atoi(form.GetFormItem(4).(*tview.InputField).GetText())
@@ -770,10 +937,11 @@ func (v *ServerView) showAddExecutor(serviceIndex int) {
 		v.showExecutors(serviceIndex)
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showExecutors(serviceIndex)
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.executor.add") + " ").SetBorderColor(tcell.ColorDarkCyan)
 	v.pages.AddAndSwitchToPage("add-executor", form, true)
 	v.app.SetFocus(form)
@@ -797,11 +965,11 @@ func (v *ServerView) showGlobalResources() {
 		}
 	}
 
-	list.AddItem("[green]"+i18n.T("server.globalresource.add")+"[-]", i18n.T("server.globalresource.add.desc"), 'a', func() {
+	list.AddItem("[white:green]"+i18n.T("server.globalresource.add")+"[-]", i18n.T("server.globalresource.add.desc"), 'a', func() {
 		v.showAddGlobalResource()
 	})
 
-	list.AddItem("[red]"+i18n.T("common.back")+"[-]", i18n.T("common.return"), 'b', func() {
+	list.AddItem("[-:-:-] [white:red] "+i18n.T("common.back")+" [-:-:-]", i18n.T("common.return"), 'b', func() {
 		v.Show()
 	})
 
@@ -862,7 +1030,7 @@ func (v *ServerView) showGlobalResourceDetail(index int) {
 		updatePreview()
 	})
 
-	form.AddButton(i18n.T("common.save"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.save")+"[-:-]", func() {
 		res.Name = form.GetFormItem(0).(*tview.InputField).GetText()
 		res.Auth = form.GetFormItem(1).(*tview.InputField).GetText()
 		res.Type = form.GetFormItem(2).(*tview.InputField).GetText()
@@ -879,7 +1047,7 @@ func (v *ServerView) showGlobalResourceDetail(index int) {
 		v.showGlobalResources()
 	})
 
-	form.AddButton(i18n.T("common.delete"), func() {
+	form.AddButton("[white:red]"+i18n.T("common.delete")+"[-:-]", func() {
 		v.showConfirm(i18n.T("common.delete"), i18n.T("server.confirm.delete"), func(confirmed bool) {
 			if confirmed {
 				v.configService.RemoveGlobalResource(index)
@@ -893,10 +1061,11 @@ func (v *ServerView) showGlobalResourceDetail(index int) {
 		})
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showGlobalResources()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.globalresource.edit") + " ").SetBorderColor(tcell.ColorDarkCyan)
 
 	// Initial preview
@@ -922,7 +1091,7 @@ func (v *ServerView) showAddGlobalResource() {
 	form.AddInputField(i18n.T("server.globalresource.factory"), "org.apache.catalina.users.MemoryUserDatabaseFactory", 60, nil, nil)
 	form.AddInputField(i18n.T("server.globalresource.pathname"), "conf/tomcat-users.xml", 40, nil, nil)
 
-	form.AddButton(i18n.T("common.add"), func() {
+	form.AddButton("[white:green]"+i18n.T("common.add")+"[-:-]", func() {
 		res := server.Resource{
 			Name:        form.GetFormItem(0).(*tview.InputField).GetText(),
 			Auth:        form.GetFormItem(1).(*tview.InputField).GetText(),
@@ -943,10 +1112,11 @@ func (v *ServerView) showAddGlobalResource() {
 		v.showGlobalResources()
 	})
 
-	form.AddButton(i18n.T("common.cancel"), func() {
+	form.AddButton("[black:yellow]"+i18n.T("common.cancel")+"[-:-]", func() {
 		v.showGlobalResources()
 	})
 
+	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" " + i18n.T("server.globalresource.add") + " ").SetBorderColor(tcell.ColorDarkCyan)
 	v.pages.AddAndSwitchToPage("add-global-resource", form, true)
 	v.app.SetFocus(form)
