@@ -1,5 +1,7 @@
 # TomcatKit
 
+**[English](README.md)** | **[한국어](README_KR.md)** | **[日本語](README_JP.md)**
+
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/playok/TomcatKit)](https://goreportcard.com/report/github.com/playok/TomcatKit)
@@ -19,6 +21,14 @@ A CLI-based TUI (Text User Interface) helper utility for Apache Tomcat 9.0 confi
 - **Auto-detection**: Automatically detects Tomcat installations from environment variables, common paths, and running processes
 - **Safe Editing**: Creates automatic backups before modifying configuration files
 - **Multi-instance Support**: Remembers recently used Tomcat instances
+- **Multi-language Support**: English, Korean, Japanese (Press F2 to switch)
+- **Colored UI**: Intuitive button styling with semantic colors
+  - Green: Save, Add, Apply
+  - Red: Delete, Remove, Back
+  - Yellow: Cancel
+  - Blue: Navigation (Contexts, Parameters)
+- **Context-sensitive Help**: Property help panels for each configuration field
+- **Live XML Preview**: Real-time preview of configuration changes
 
 ## Supported Configuration Modules
 
@@ -86,11 +96,15 @@ go build -o bin/tomcatkit ./cmd/tomcatkit
 
 ### Navigation
 
-- **Arrow Keys**: Navigate menus and lists
-- **Enter**: Select item or confirm action
-- **Escape**: Go back / Cancel
-- **Tab**: Move between form fields
-- **Ctrl+C**: Exit application
+| Key | Action |
+|-----|--------|
+| Arrow Keys | Navigate menus and lists |
+| Enter | Select item or confirm action |
+| Escape | Go back one level |
+| Tab | Move between form fields |
+| F2 | Switch language (EN/KR/JP) |
+| q | Quit application |
+| Ctrl+C | Force exit |
 
 ## Project Structure
 
@@ -103,41 +117,18 @@ tomcatkit/
 │   ├── config/
 │   │   ├── tomcat.go         # Tomcat instance configuration
 │   │   ├── settings.go       # Application settings persistence
-│   │   ├── server/
-│   │   │   ├── server.go     # server.xml type definitions
-│   │   │   └── service.go    # server.xml operations
-│   │   ├── connector/
-│   │   │   └── connector.go  # Connector protocols and defaults
-│   │   ├── realm/
-│   │   │   ├── realm.go      # Realm types and utilities
-│   │   │   └── users.go      # tomcat-users.xml operations
-│   │   ├── jndi/
-│   │   │   ├── resources.go  # JNDI resource types
-│   │   │   └── service.go    # context.xml operations
-│   │   ├── logging/
-│   │   │   ├── logging.go    # Logging configuration types
-│   │   │   └── service.go    # logging.properties operations
-│   │   └── web/
-│   │       ├── types.go      # web.xml type definitions
-│   │       └── service.go    # web.xml operations
-│   ├── detector/
-│   │   └── detector.go       # Tomcat auto-detection
-│   ├── parser/
-│   │   └── xml.go            # XML parsing utilities
+│   │   ├── server/           # server.xml types and operations
+│   │   ├── connector/        # Connector protocols and defaults
+│   │   ├── realm/            # Realm types and tomcat-users.xml
+│   │   ├── jndi/             # JNDI resource types and context.xml
+│   │   ├── logging/          # Logging configuration
+│   │   └── web/              # web.xml types and operations
+│   ├── detector/             # Tomcat auto-detection
+│   ├── i18n/                 # Internationalization (EN/KR/JP)
+│   ├── parser/               # XML parsing utilities
 │   └── tui/
 │       ├── app.go            # Main TUI application
-│       └── views/
-│           ├── server.go     # Server configuration view
-│           ├── connector.go  # Connector configuration view
-│           ├── security.go   # Security/Realm view
-│           ├── jndi.go       # JNDI Resources view
-│           ├── host.go       # Virtual Hosts & Contexts view
-│           ├── valve.go      # Valves configuration view
-│           ├── cluster.go    # Clustering configuration view
-│           ├── logging.go    # Logging configuration view
-│           ├── context.go    # Context configuration view
-│           ├── web.go        # Web application configuration view
-│           └── quicktemplates.go  # Quick configuration templates
+│       └── views/            # Configuration views
 ├── go.mod
 ├── go.sum
 ├── Makefile
@@ -159,6 +150,11 @@ TomcatKit manages the following Tomcat configuration files:
 Application settings are stored in:
 - Linux/macOS: `~/.config/tomcatkit/settings.json`
 - Windows: `%APPDATA%\tomcatkit\settings.json`
+
+Settings include:
+- Last used Tomcat instance
+- Recent instance paths
+- Preferred language
 
 ## About This Project
 
