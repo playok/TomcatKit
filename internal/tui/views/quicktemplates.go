@@ -100,6 +100,9 @@ func (v *QuickTemplatesView) showMainMenu() {
 func (v *QuickTemplatesView) showVirtualThreadTemplate() {
 	cfg := v.configService.GetServer()
 
+	// Help panel
+	helpPanel := HelpPanel("help.qt.virtualthread")
+
 	// Check if virtual thread executor already exists
 	hasVirtualExecutor := false
 	for _, svc := range cfg.Services {
@@ -109,25 +112,6 @@ func (v *QuickTemplatesView) showVirtualThreadTemplate() {
 				break
 			}
 		}
-	}
-
-	// Build info text
-	infoText := `[yellow]Virtual Thread Executor (Java 21+, Tomcat 11+)[white]
-
-Virtual threads are lightweight threads that can significantly
-improve throughput for I/O-bound applications.
-
-[green]Requirements:[white]
-  - Java 21 or later
-  - Tomcat 11.0 or later (or Tomcat 10.1.25+)
-
-[green]This template will:[white]
-  - Create a Virtual Thread Executor named "virtualThreadExecutor"
-  - Configure the HTTP connector to use the executor
-
-`
-	if hasVirtualExecutor {
-		infoText += "[red]Warning: Virtual Thread executor already exists![white]\n"
 	}
 
 	// Get available connectors for selection
@@ -144,8 +128,10 @@ improve throughput for I/O-bound applications.
 
 	form := tview.NewForm()
 
-	// Info display
-	form.AddTextView("Information", infoText, 60, 12, true, false)
+	// Warning if executor exists
+	if hasVirtualExecutor {
+		form.AddTextView("Warning", "[red]Virtual Thread executor already exists![white]", 50, 1, false, false)
+	}
 
 	// Executor name
 	executorName := "virtualThreadExecutor"
@@ -211,7 +197,10 @@ improve throughput for I/O-bound applications.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Virtual Thread Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.virtualthread", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -219,22 +208,15 @@ improve throughput for I/O-bound applications.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("virtual-thread", form, true)
+	// Remove unused helpPanel reference
+	_ = helpPanel
+
+	v.pages.AddAndSwitchToPage("virtual-thread", flex, true)
 }
 
 // showHTTPSTemplate shows the HTTPS configuration template
 func (v *QuickTemplatesView) showHTTPSTemplate() {
 	form := tview.NewForm()
-
-	infoText := `[yellow]HTTPS Connector Configuration[white]
-
-This template creates an HTTPS connector with SSL/TLS.
-
-[green]You will need:[white]
-  - A keystore file (.jks or .p12)
-  - Keystore password
-`
-	form.AddTextView("Information", infoText, 60, 8, true, false)
 
 	port := "8443"
 	form.AddInputField("HTTPS Port", port, 10, acceptNumber, func(text string) {
@@ -300,7 +282,10 @@ This template creates an HTTPS connector with SSL/TLS.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" HTTPS Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.https", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -308,7 +293,7 @@ This template creates an HTTPS connector with SSL/TLS.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("https-template", form, true)
+	v.pages.AddAndSwitchToPage("https-template", flex, true)
 }
 
 // showConnectionPoolTemplate shows the connection pool tuning template
@@ -316,17 +301,6 @@ func (v *QuickTemplatesView) showConnectionPoolTemplate() {
 	cfg := v.configService.GetServer()
 
 	form := tview.NewForm()
-
-	infoText := `[yellow]Connection Pool Optimization[white]
-
-Tune thread pool settings for better performance.
-
-[green]Recommended settings:[white]
-  - Development: 25-100 threads
-  - Production: 150-400 threads
-  - High traffic: 400-800 threads
-`
-	form.AddTextView("Information", infoText, 60, 9, true, false)
 
 	profiles := []string{"Development (25-100)", "Production (150-400)", "High Traffic (400-800)", "Custom"}
 	form.AddDropDown("Profile", profiles, 1, nil)
@@ -386,7 +360,10 @@ Tune thread pool settings for better performance.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Connection Pool Tuning ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.connpool", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -394,7 +371,7 @@ Tune thread pool settings for better performance.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("pool-template", form, true)
+	v.pages.AddAndSwitchToPage("pool-template", flex, true)
 }
 
 // showGzipTemplate shows the Gzip compression template
@@ -402,19 +379,6 @@ func (v *QuickTemplatesView) showGzipTemplate() {
 	cfg := v.configService.GetServer()
 
 	form := tview.NewForm()
-
-	infoText := `[yellow]Gzip Compression[white]
-
-Enable response compression for text-based content.
-
-[green]This will add compression attributes to HTTP connectors:[white]
-  - compression="on"
-  - compressionMinSize="2048"
-  - compressibleMimeType="text/html,text/xml,text/plain,
-    text/css,text/javascript,application/javascript,
-    application/json,application/xml"
-`
-	form.AddTextView("Information", infoText, 60, 11, true, false)
 
 	minSize := "2048"
 	form.AddInputField("Min Compression Size (bytes)", minSize, 10, acceptNumber, func(text string) {
@@ -452,7 +416,10 @@ Enable response compression for text-based content.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Gzip Compression ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.gzip", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -460,7 +427,7 @@ Enable response compression for text-based content.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("gzip-template", form, true)
+	v.pages.AddAndSwitchToPage("gzip-template", flex, true)
 }
 
 // showAccessLogTemplate shows the access log configuration template
@@ -603,18 +570,6 @@ func (v *QuickTemplatesView) showAccessLogTemplate() {
 func (v *QuickTemplatesView) showSecurityHardeningTemplate() {
 	form := tview.NewForm()
 
-	infoText := `[yellow]Security Hardening[white]
-
-Apply security best practices to your Tomcat configuration.
-
-[green]This template will:[white]
-  - Change default shutdown port from 8005 to -1 (disabled)
-  - Change shutdown command
-  - Remove server version from error pages
-  - Add security-related listeners
-`
-	form.AddTextView("Information", infoText, 60, 11, true, false)
-
 	disableShutdown := true
 	form.AddCheckbox("Disable Shutdown Port", disableShutdown, func(checked bool) {
 		disableShutdown = checked
@@ -690,7 +645,10 @@ Apply security best practices to your Tomcat configuration.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Security Hardening ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.security", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -698,7 +656,7 @@ Apply security best practices to your Tomcat configuration.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("security-template", form, true)
+	v.pages.AddAndSwitchToPage("security-template", flex, true)
 }
 
 // setStatus updates the status bar
@@ -728,21 +686,6 @@ func generateRandomString(length int) string {
 // showApacheHttpdTemplate shows the Apache httpd (mod_jk/AJP) configuration template
 func (v *QuickTemplatesView) showApacheHttpdTemplate() {
 	form := tview.NewForm()
-
-	infoText := `[yellow]Apache httpd Integration (mod_jk / mod_proxy_ajp)[white]
-
-Configure AJP connector for Apache httpd reverse proxy.
-
-[green]Supported Apache modules:[white]
-  - mod_jk: Traditional Tomcat connector
-  - mod_proxy_ajp: Apache proxy module for AJP
-
-[green]This template will:[white]
-  - Create AJP/1.3 connector on specified port
-  - Configure secret authentication (Tomcat 9.0.31+)
-  - Add RemoteIpValve for proper client IP handling
-`
-	form.AddTextView("Information", infoText, 60, 14, true, false)
 
 	ajpPort := "8009"
 	form.AddInputField("AJP Port", ajpPort, 10, acceptNumber, func(text string) {
@@ -828,7 +771,10 @@ Configure AJP connector for Apache httpd reverse proxy.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Apache httpd (AJP) Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.apache", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -836,7 +782,7 @@ Configure AJP connector for Apache httpd reverse proxy.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("apache-template", form, true)
+	v.pages.AddAndSwitchToPage("apache-template", flex, true)
 }
 
 // showApacheConfigExample shows Apache httpd configuration example
@@ -898,19 +844,6 @@ JkMount /* tomcat1
 // showNginxProxyTemplate shows the nginx reverse proxy configuration template
 func (v *QuickTemplatesView) showNginxProxyTemplate() {
 	form := tview.NewForm()
-
-	infoText := `[yellow]nginx Reverse Proxy Configuration[white]
-
-Configure Tomcat for nginx proxy_pass.
-
-[green]This template will:[white]
-  - Add RemoteIpValve for X-Forwarded-* headers
-  - Configure proper client IP handling
-  - Optionally adjust HTTP connector settings
-
-[green]nginx will proxy to Tomcat's HTTP connector[white]
-`
-	form.AddTextView("Information", infoText, 60, 12, true, false)
 
 	// Get HTTP connectors
 	cfg := v.configService.GetServer()
@@ -997,7 +930,10 @@ Configure Tomcat for nginx proxy_pass.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" nginx Reverse Proxy Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.nginx", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -1005,7 +941,7 @@ Configure Tomcat for nginx proxy_pass.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("nginx-template", form, true)
+	v.pages.AddAndSwitchToPage("nginx-template", flex, true)
 }
 
 // showNginxConfigExample shows nginx configuration example
@@ -1098,21 +1034,6 @@ server {
 func (v *QuickTemplatesView) showHAProxyTemplate() {
 	form := tview.NewForm()
 
-	infoText := `[yellow]HAProxy Load Balancer Configuration[white]
-
-Configure Tomcat for HAProxy load balancing.
-
-[green]This template will:[white]
-  - Add RemoteIpValve for X-Forwarded-* headers
-  - Configure jvmRoute for sticky sessions (optional)
-  - Set up proper client IP handling
-
-[green]Load balancing modes supported:[white]
-  - HTTP mode (Layer 7) - recommended
-  - TCP mode (Layer 4) - for SSL passthrough
-`
-	form.AddTextView("Information", infoText, 60, 14, true, false)
-
 	// Get HTTP connectors
 	cfg := v.configService.GetServer()
 	var httpPorts []string
@@ -1202,7 +1123,10 @@ Configure Tomcat for HAProxy load balancing.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" HAProxy Load Balancer Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Create layout with form and help panel
+	flex := CreateFormWithHelp(form, "help.qt.haproxy", "")
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -1210,7 +1134,7 @@ Configure Tomcat for HAProxy load balancing.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("haproxy-template", form, true)
+	v.pages.AddAndSwitchToPage("haproxy-template", flex, true)
 }
 
 // showHAProxyConfigExample shows HAProxy configuration example

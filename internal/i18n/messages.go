@@ -3701,6 +3701,207 @@ Configure access logging for HTTP requests.
   [yellow]%{xxx}r[white]: Request attribute 'xxx'
   [yellow]%{xxx}s[white]: Session attribute 'xxx'`,
 
+		"help.qt.virtualthread": `[::b]Virtual Thread Executor[::-]
+
+Lightweight threads for high-throughput I/O operations.
+
+[aqua]Requirements:[white]
+  • Java 21 or later
+  • Tomcat 11.0+ or 10.1.25+
+
+[aqua]Benefits:[white]
+  • Improved throughput for I/O-bound apps
+  • Reduced memory footprint
+  • Simplified concurrent programming
+  • No thread pool tuning needed
+
+[aqua]Configuration:[white]
+  [yellow]Executor Name[white]: Unique identifier
+  [yellow]Thread Prefix[white]: Thread naming prefix
+  [yellow]Max Queue Size[white]: Request queue limit
+
+[aqua]Best For:[white]
+  • Database-heavy applications
+  • Microservices with many API calls
+  • Applications with blocking I/O`,
+
+		"help.qt.https": `[::b]HTTPS Connector[::-]
+
+Secure HTTP connections with SSL/TLS.
+
+[aqua]Requirements:[white]
+  • Java Keystore (.jks) or PKCS12 (.p12)
+  • Valid SSL certificate
+
+[aqua]Keystore Types:[white]
+  [yellow]JKS[white]: Java KeyStore (traditional)
+  [yellow]PKCS12[white]: Industry standard (recommended)
+
+[aqua]Configuration:[white]
+  [yellow]Port[white]: HTTPS port (default: 8443)
+  [yellow]Keystore File[white]: Path to keystore
+  [yellow]Keystore Password[white]: Keystore password
+  [yellow]Keystore Type[white]: JKS or PKCS12
+
+[aqua]Creating a Self-Signed Certificate:[white]
+  keytool -genkey -alias tomcat \
+    -keyalg RSA -keysize 2048 \
+    -keystore keystore.jks`,
+
+		"help.qt.connpool": `[::b]Connection Pool Tuning[::-]
+
+Optimize thread pool for performance.
+
+[aqua]Profiles:[white]
+  [yellow]Development[white]: 25-100 threads
+  [yellow]Production[white]: 150-400 threads
+  [yellow]High Traffic[white]: 400-800 threads
+
+[aqua]Parameters:[white]
+  [yellow]maxThreads[white]: Maximum worker threads
+  [yellow]minSpareThreads[white]: Minimum idle threads
+  [yellow]acceptCount[white]: Queue size when busy
+  [yellow]connectionTimeout[white]: Socket timeout (ms)
+
+[aqua]Tuning Tips:[white]
+  • Start with defaults, monitor, adjust
+  • maxThreads = expected concurrent users
+  • acceptCount = short burst buffer
+  • Monitor thread pool utilization
+
+[aqua]Memory Consideration:[white]
+  Each thread uses ~1MB stack space
+  400 threads ≈ 400MB memory`,
+
+		"help.qt.gzip": `[::b]Gzip Compression[::-]
+
+Reduce response size for faster transfers.
+
+[aqua]Benefits:[white]
+  • 60-80% reduction in text content
+  • Faster page load times
+  • Reduced bandwidth usage
+
+[aqua]Configuration:[white]
+  [yellow]compression[white]: on/off/force
+  [yellow]compressionMinSize[white]: Min size to compress
+  [yellow]compressibleMimeType[white]: MIME types list
+
+[aqua]Default MIME Types:[white]
+  • text/html, text/xml, text/plain
+  • text/css, text/javascript
+  • application/javascript
+  • application/json, application/xml
+
+[aqua]Considerations:[white]
+  • CPU overhead for compression
+  • Already compressed: images, videos
+  • Min size 2048 bytes recommended`,
+
+		"help.qt.security": `[::b]Security Hardening[::-]
+
+Apply security best practices.
+
+[aqua]Shutdown Port:[white]
+  Disable remote shutdown by setting port=-1
+  Changes SHUTDOWN command to random string
+
+[aqua]Server Info:[white]
+  Hide version in error pages
+  Prevents information disclosure
+
+[aqua]Security Listener:[white]
+  Validates security settings at startup
+  Checks for common misconfigurations
+
+[aqua]Best Practices:[white]
+  • Remove default webapps (examples, docs)
+  • Use strong passwords
+  • Enable access logging
+  • Configure SSL/TLS
+  • Set secure cookie flags
+  • Limit manager access by IP`,
+
+		"help.qt.apache": `[::b]Apache httpd Integration[::-]
+
+Configure AJP connector for Apache proxy.
+
+[aqua]Modules:[white]
+  [yellow]mod_proxy_ajp[white]: Modern, recommended
+  [yellow]mod_jk[white]: Traditional connector
+
+[aqua]AJP Benefits:[white]
+  • Binary protocol (faster than HTTP)
+  • Preserves client information
+  • Session stickiness support
+
+[aqua]Configuration:[white]
+  [yellow]AJP Port[white]: Default 8009
+  [yellow]Bind Address[white]: 127.0.0.1 for local only
+  [yellow]Secret[white]: Authentication token (9.0.31+)
+
+[aqua]RemoteIpValve:[white]
+  Restores original client IP from
+  X-Forwarded-For header
+
+[aqua]Security:[white]
+  • Bind to localhost only
+  • Use secret for authentication
+  • Firewall AJP port from public`,
+
+		"help.qt.nginx": `[::b]nginx Reverse Proxy[::-]
+
+Configure Tomcat for nginx proxy_pass.
+
+[aqua]How It Works:[white]
+  nginx → HTTP → Tomcat
+  (Layer 7 reverse proxy)
+
+[aqua]RemoteIpValve:[white]
+  Restores original client information:
+  • X-Forwarded-For → Remote IP
+  • X-Forwarded-Proto → HTTPS detection
+
+[aqua]Configuration:[white]
+  [yellow]Internal Proxies[white]: Trusted proxy IPs
+  [yellow]X-Forwarded-Proto[white]: For HTTPS detection
+
+[aqua]Benefits:[white]
+  • SSL termination at nginx
+  • Static file serving by nginx
+  • Load balancing capability
+  • Request buffering
+
+[aqua]Regex Pattern:[white]
+  Internal proxy pattern uses Java regex
+  Example: 127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+`,
+
+		"help.qt.haproxy": `[::b]HAProxy Load Balancer[::-]
+
+Configure Tomcat for HAProxy.
+
+[aqua]Load Balancing Modes:[white]
+  [yellow]HTTP (Layer 7)[white]: Recommended
+  [yellow]TCP (Layer 4)[white]: SSL passthrough
+
+[aqua]Sticky Sessions:[white]
+  [yellow]jvmRoute[white]: Node identifier in session ID
+  Format: SESSION_ID.jvmRoute
+  HAProxy uses cookie for affinity
+
+[aqua]Configuration:[white]
+  [yellow]JVM Route[white]: Unique node ID (e.g., tomcat1)
+  [yellow]Internal Proxies[white]: HAProxy server IPs
+
+[aqua]Health Checks:[white]
+  Configure /health endpoint
+  HAProxy checks backend availability
+
+[aqua]High Availability:[white]
+  • Multiple Tomcat backends
+  • Automatic failover
+  • Session replication optional`,
+
 		"help.valve.remoteaddr.allow": `[yellow]Allow Pattern[white]
 
 Regex for allowed IP addresses.
@@ -6993,6 +7194,207 @@ HTTP 요청에 대한 액세스 로깅을 설정합니다.
   [yellow]%{xxx}r[white]: 요청 속성 'xxx'
   [yellow]%{xxx}s[white]: 세션 속성 'xxx'`,
 
+		"help.qt.virtualthread": `[::b]가상 스레드 Executor[::-]
+
+고처리량 I/O 작업을 위한 경량 스레드입니다.
+
+[aqua]요구사항:[white]
+  • Java 21 이상
+  • Tomcat 11.0+ 또는 10.1.25+
+
+[aqua]장점:[white]
+  • I/O 바운드 앱의 처리량 향상
+  • 메모리 사용량 감소
+  • 동시성 프로그래밍 단순화
+  • 스레드 풀 튜닝 불필요
+
+[aqua]설정:[white]
+  [yellow]Executor 이름[white]: 고유 식별자
+  [yellow]스레드 접두사[white]: 스레드 명명 접두사
+  [yellow]최대 큐 크기[white]: 요청 큐 제한
+
+[aqua]적합한 용도:[white]
+  • 데이터베이스 집약 애플리케이션
+  • 많은 API 호출이 있는 마이크로서비스
+  • 블로킹 I/O가 있는 애플리케이션`,
+
+		"help.qt.https": `[::b]HTTPS 커넥터[::-]
+
+SSL/TLS를 통한 보안 HTTP 연결.
+
+[aqua]요구사항:[white]
+  • Java 키스토어 (.jks) 또는 PKCS12 (.p12)
+  • 유효한 SSL 인증서
+
+[aqua]키스토어 유형:[white]
+  [yellow]JKS[white]: Java KeyStore (전통적)
+  [yellow]PKCS12[white]: 산업 표준 (권장)
+
+[aqua]설정:[white]
+  [yellow]포트[white]: HTTPS 포트 (기본값: 8443)
+  [yellow]키스토어 파일[white]: 키스토어 경로
+  [yellow]키스토어 비밀번호[white]: 키스토어 비밀번호
+  [yellow]키스토어 유형[white]: JKS 또는 PKCS12
+
+[aqua]자체 서명 인증서 생성:[white]
+  keytool -genkey -alias tomcat \
+    -keyalg RSA -keysize 2048 \
+    -keystore keystore.jks`,
+
+		"help.qt.connpool": `[::b]커넥션 풀 튜닝[::-]
+
+성능 최적화를 위한 스레드 풀 설정.
+
+[aqua]프로파일:[white]
+  [yellow]개발[white]: 25-100 스레드
+  [yellow]프로덕션[white]: 150-400 스레드
+  [yellow]고트래픽[white]: 400-800 스레드
+
+[aqua]매개변수:[white]
+  [yellow]maxThreads[white]: 최대 작업 스레드
+  [yellow]minSpareThreads[white]: 최소 유휴 스레드
+  [yellow]acceptCount[white]: 바쁠 때 큐 크기
+  [yellow]connectionTimeout[white]: 소켓 타임아웃 (ms)
+
+[aqua]튜닝 팁:[white]
+  • 기본값으로 시작, 모니터링 후 조정
+  • maxThreads = 예상 동시 사용자
+  • acceptCount = 짧은 버스트 버퍼
+  • 스레드 풀 사용률 모니터링
+
+[aqua]메모리 고려사항:[white]
+  각 스레드는 ~1MB 스택 공간 사용
+  400 스레드 ≈ 400MB 메모리`,
+
+		"help.qt.gzip": `[::b]Gzip 압축[::-]
+
+빠른 전송을 위한 응답 크기 축소.
+
+[aqua]장점:[white]
+  • 텍스트 콘텐츠 60-80% 감소
+  • 페이지 로드 시간 단축
+  • 대역폭 사용량 감소
+
+[aqua]설정:[white]
+  [yellow]compression[white]: on/off/force
+  [yellow]compressionMinSize[white]: 압축할 최소 크기
+  [yellow]compressibleMimeType[white]: MIME 유형 목록
+
+[aqua]기본 MIME 유형:[white]
+  • text/html, text/xml, text/plain
+  • text/css, text/javascript
+  • application/javascript
+  • application/json, application/xml
+
+[aqua]고려사항:[white]
+  • 압축에 따른 CPU 오버헤드
+  • 이미 압축됨: 이미지, 동영상
+  • 최소 크기 2048바이트 권장`,
+
+		"help.qt.security": `[::b]보안 강화[::-]
+
+보안 모범 사례 적용.
+
+[aqua]셧다운 포트:[white]
+  port=-1로 원격 셧다운 비활성화
+  SHUTDOWN 명령을 랜덤 문자열로 변경
+
+[aqua]서버 정보:[white]
+  오류 페이지에서 버전 숨김
+  정보 노출 방지
+
+[aqua]보안 리스너:[white]
+  시작 시 보안 설정 검증
+  일반적인 잘못된 구성 확인
+
+[aqua]모범 사례:[white]
+  • 기본 webapps 제거 (examples, docs)
+  • 강력한 비밀번호 사용
+  • 액세스 로깅 활성화
+  • SSL/TLS 구성
+  • 보안 쿠키 플래그 설정
+  • IP로 관리자 액세스 제한`,
+
+		"help.qt.apache": `[::b]Apache httpd 통합[::-]
+
+Apache 프록시용 AJP 커넥터 구성.
+
+[aqua]모듈:[white]
+  [yellow]mod_proxy_ajp[white]: 현대적, 권장
+  [yellow]mod_jk[white]: 전통적인 커넥터
+
+[aqua]AJP 장점:[white]
+  • 바이너리 프로토콜 (HTTP보다 빠름)
+  • 클라이언트 정보 보존
+  • 세션 고정 지원
+
+[aqua]설정:[white]
+  [yellow]AJP 포트[white]: 기본값 8009
+  [yellow]바인드 주소[white]: 로컬 전용은 127.0.0.1
+  [yellow]시크릿[white]: 인증 토큰 (9.0.31+)
+
+[aqua]RemoteIpValve:[white]
+  X-Forwarded-For 헤더에서
+  원래 클라이언트 IP 복원
+
+[aqua]보안:[white]
+  • localhost에만 바인드
+  • 인증에 시크릿 사용
+  • 공개에서 AJP 포트 방화벽`,
+
+		"help.qt.nginx": `[::b]nginx 리버스 프록시[::-]
+
+nginx proxy_pass용 Tomcat 구성.
+
+[aqua]작동 방식:[white]
+  nginx → HTTP → Tomcat
+  (레이어 7 리버스 프록시)
+
+[aqua]RemoteIpValve:[white]
+  원래 클라이언트 정보 복원:
+  • X-Forwarded-For → 원격 IP
+  • X-Forwarded-Proto → HTTPS 감지
+
+[aqua]설정:[white]
+  [yellow]내부 프록시[white]: 신뢰할 수 있는 프록시 IP
+  [yellow]X-Forwarded-Proto[white]: HTTPS 감지용
+
+[aqua]장점:[white]
+  • nginx에서 SSL 종료
+  • nginx의 정적 파일 서빙
+  • 로드 밸런싱 기능
+  • 요청 버퍼링
+
+[aqua]정규식 패턴:[white]
+  내부 프록시 패턴은 Java 정규식 사용
+  예: 127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+`,
+
+		"help.qt.haproxy": `[::b]HAProxy 로드 밸런서[::-]
+
+HAProxy용 Tomcat 구성.
+
+[aqua]로드 밸런싱 모드:[white]
+  [yellow]HTTP (레이어 7)[white]: 권장
+  [yellow]TCP (레이어 4)[white]: SSL 패스스루
+
+[aqua]스티키 세션:[white]
+  [yellow]jvmRoute[white]: 세션 ID의 노드 식별자
+  형식: SESSION_ID.jvmRoute
+  HAProxy는 쿠키로 어피니티 유지
+
+[aqua]설정:[white]
+  [yellow]JVM Route[white]: 고유 노드 ID (예: tomcat1)
+  [yellow]내부 프록시[white]: HAProxy 서버 IP
+
+[aqua]헬스 체크:[white]
+  /health 엔드포인트 구성
+  HAProxy가 백엔드 가용성 확인
+
+[aqua]고가용성:[white]
+  • 여러 Tomcat 백엔드
+  • 자동 장애 조치
+  • 세션 복제 선택 사항`,
+
 		"help.valve.remoteaddr.allow": `[yellow]허용 패턴[white]
 
 허용된 IP 주소의 정규식입니다.
@@ -9934,6 +10336,207 @@ HTTPリクエストのアクセスログを設定します。
   [yellow]%{xxx}c[white]: Cookie値 'xxx'
   [yellow]%{xxx}r[white]: リクエスト属性 'xxx'
   [yellow]%{xxx}s[white]: セッション属性 'xxx'`,
+
+		"help.qt.virtualthread": `[::b]仮想スレッドExecutor[::-]
+
+高スループットI/O操作のための軽量スレッドです。
+
+[aqua]要件:[white]
+  • Java 21以上
+  • Tomcat 11.0+または10.1.25+
+
+[aqua]メリット:[white]
+  • I/Oバウンドアプリのスループット向上
+  • メモリフットプリント削減
+  • 並行プログラミングの簡素化
+  • スレッドプールチューニング不要
+
+[aqua]設定:[white]
+  [yellow]Executor名[white]: 一意の識別子
+  [yellow]スレッドプレフィックス[white]: スレッド命名プレフィックス
+  [yellow]最大キューサイズ[white]: リクエストキュー制限
+
+[aqua]適したユースケース:[white]
+  • データベース集約アプリケーション
+  • 多くのAPI呼び出しがあるマイクロサービス
+  • ブロッキングI/Oを持つアプリケーション`,
+
+		"help.qt.https": `[::b]HTTPSコネクタ[::-]
+
+SSL/TLSによる安全なHTTP接続。
+
+[aqua]要件:[white]
+  • Javaキーストア (.jks) またはPKCS12 (.p12)
+  • 有効なSSL証明書
+
+[aqua]キーストアタイプ:[white]
+  [yellow]JKS[white]: Java KeyStore (従来型)
+  [yellow]PKCS12[white]: 業界標準 (推奨)
+
+[aqua]設定:[white]
+  [yellow]ポート[white]: HTTPSポート (デフォルト: 8443)
+  [yellow]キーストアファイル[white]: キーストアのパス
+  [yellow]キーストアパスワード[white]: キーストアのパスワード
+  [yellow]キーストアタイプ[white]: JKSまたはPKCS12
+
+[aqua]自己署名証明書の作成:[white]
+  keytool -genkey -alias tomcat \
+    -keyalg RSA -keysize 2048 \
+    -keystore keystore.jks`,
+
+		"help.qt.connpool": `[::b]コネクションプールチューニング[::-]
+
+パフォーマンス最適化のためのスレッドプール設定。
+
+[aqua]プロファイル:[white]
+  [yellow]開発[white]: 25-100スレッド
+  [yellow]本番[white]: 150-400スレッド
+  [yellow]高トラフィック[white]: 400-800スレッド
+
+[aqua]パラメータ:[white]
+  [yellow]maxThreads[white]: 最大ワーカースレッド
+  [yellow]minSpareThreads[white]: 最小アイドルスレッド
+  [yellow]acceptCount[white]: ビジー時のキューサイズ
+  [yellow]connectionTimeout[white]: ソケットタイムアウト (ms)
+
+[aqua]チューニングのヒント:[white]
+  • デフォルトで開始、監視して調整
+  • maxThreads = 予想同時ユーザー数
+  • acceptCount = 短期バーストバッファ
+  • スレッドプール使用率を監視
+
+[aqua]メモリの考慮事項:[white]
+  各スレッドは~1MBスタック領域を使用
+  400スレッド ≈ 400MBメモリ`,
+
+		"help.qt.gzip": `[::b]Gzip圧縮[::-]
+
+高速転送のためのレスポンスサイズ削減。
+
+[aqua]メリット:[white]
+  • テキストコンテンツ60-80%削減
+  • ページロード時間短縮
+  • 帯域幅使用量削減
+
+[aqua]設定:[white]
+  [yellow]compression[white]: on/off/force
+  [yellow]compressionMinSize[white]: 圧縮する最小サイズ
+  [yellow]compressibleMimeType[white]: MIMEタイプリスト
+
+[aqua]デフォルトMIMEタイプ:[white]
+  • text/html, text/xml, text/plain
+  • text/css, text/javascript
+  • application/javascript
+  • application/json, application/xml
+
+[aqua]考慮事項:[white]
+  • 圧縮によるCPUオーバーヘッド
+  • 既に圧縮済み: 画像、動画
+  • 最小サイズ2048バイト推奨`,
+
+		"help.qt.security": `[::b]セキュリティ強化[::-]
+
+セキュリティベストプラクティスの適用。
+
+[aqua]シャットダウンポート:[white]
+  port=-1でリモートシャットダウン無効化
+  SHUTDOWNコマンドをランダム文字列に変更
+
+[aqua]サーバー情報:[white]
+  エラーページでバージョンを非表示
+  情報漏洩を防止
+
+[aqua]セキュリティリスナー:[white]
+  起動時にセキュリティ設定を検証
+  一般的な誤設定をチェック
+
+[aqua]ベストプラクティス:[white]
+  • デフォルトwebappsを削除 (examples, docs)
+  • 強力なパスワードを使用
+  • アクセスログを有効化
+  • SSL/TLSを設定
+  • セキュアCookieフラグを設定
+  • IPでマネージャーアクセスを制限`,
+
+		"help.qt.apache": `[::b]Apache httpd統合[::-]
+
+ApacheプロキシのためのAJPコネクタ設定。
+
+[aqua]モジュール:[white]
+  [yellow]mod_proxy_ajp[white]: モダン、推奨
+  [yellow]mod_jk[white]: 従来のコネクタ
+
+[aqua]AJPのメリット:[white]
+  • バイナリプロトコル (HTTPより高速)
+  • クライアント情報を保持
+  • セッションスティッキネスサポート
+
+[aqua]設定:[white]
+  [yellow]AJPポート[white]: デフォルト8009
+  [yellow]バインドアドレス[white]: ローカルのみなら127.0.0.1
+  [yellow]シークレット[white]: 認証トークン (9.0.31+)
+
+[aqua]RemoteIpValve:[white]
+  X-Forwarded-Forヘッダーから
+  元のクライアントIPを復元
+
+[aqua]セキュリティ:[white]
+  • localhostのみにバインド
+  • 認証にシークレットを使用
+  • パブリックからAJPポートをファイアウォール`,
+
+		"help.qt.nginx": `[::b]nginxリバースプロキシ[::-]
+
+nginx proxy_pass用Tomcat設定。
+
+[aqua]仕組み:[white]
+  nginx → HTTP → Tomcat
+  (レイヤー7リバースプロキシ)
+
+[aqua]RemoteIpValve:[white]
+  元のクライアント情報を復元:
+  • X-Forwarded-For → リモートIP
+  • X-Forwarded-Proto → HTTPS検出
+
+[aqua]設定:[white]
+  [yellow]内部プロキシ[white]: 信頼できるプロキシIP
+  [yellow]X-Forwarded-Proto[white]: HTTPS検出用
+
+[aqua]メリット:[white]
+  • nginxでSSL終端
+  • nginxで静的ファイル配信
+  • ロードバランシング機能
+  • リクエストバッファリング
+
+[aqua]正規表現パターン:[white]
+  内部プロキシパターンはJava正規表現を使用
+  例: 127\\.0\\.0\\.1|10\\.\\d+\\.\\d+\\.\\d+`,
+
+		"help.qt.haproxy": `[::b]HAProxyロードバランサー[::-]
+
+HAProxy用Tomcat設定。
+
+[aqua]ロードバランシングモード:[white]
+  [yellow]HTTP (レイヤー7)[white]: 推奨
+  [yellow]TCP (レイヤー4)[white]: SSLパススルー
+
+[aqua]スティッキーセッション:[white]
+  [yellow]jvmRoute[white]: セッションIDのノード識別子
+  形式: SESSION_ID.jvmRoute
+  HAProxyはCookieでアフィニティを維持
+
+[aqua]設定:[white]
+  [yellow]JVM Route[white]: 一意のノードID (例: tomcat1)
+  [yellow]内部プロキシ[white]: HAProxyサーバーIP
+
+[aqua]ヘルスチェック:[white]
+  /healthエンドポイントを設定
+  HAProxyがバックエンドの可用性を確認
+
+[aqua]高可用性:[white]
+  • 複数のTomcatバックエンド
+  • 自動フェイルオーバー
+  • セッションレプリケーションはオプション`,
 
 		"help.valve.remoteaddr.allow": `[yellow]許可パターン[white]
 
