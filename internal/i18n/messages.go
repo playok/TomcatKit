@@ -883,6 +883,114 @@ A shared thread pool for Connectors.
 
 [gray]Connectors reference Executors via executor="name" attribute.[-]`,
 
+		// Detailed Server Form Help
+		"help.server.listener.classname": `[::b]Listener Class Name[::-]
+The fully qualified Java class name of the lifecycle listener.
+
+[green]Common Listeners:[-]
+• [yellow]VersionLoggerListener[-]: Logs Tomcat version on startup
+• [yellow]AprLifecycleListener[-]: APR (Apache Portable Runtime) support
+• [yellow]JreMemoryLeakPreventionListener[-]: Prevents memory leaks
+• [yellow]GlobalResourcesLifecycleListener[-]: JNDI global resources
+• [yellow]ThreadLocalLeakPreventionListener[-]: ThreadLocal cleanup
+
+[green]Purpose:[-]
+Listeners respond to lifecycle events during server startup and shutdown.
+
+[gray]Example: org.apache.catalina.startup.VersionLoggerListener[-]`,
+
+		"help.server.listener.sslengine": `[::b]SSL Engine[::-]
+Specifies the SSL engine to use with APR connector.
+
+[yellow]Default:[-] on
+[yellow]Options:[-] on, off
+
+[green]Usage:[-]
+Only applicable for APR-based connectors.
+Enables native OpenSSL support for better SSL/TLS performance.
+
+[gray]Requires APR/native library installation.[-]`,
+
+		"help.server.listener.sslseed": `[::b]SSL Random Seed[::-]
+Source of random data for SSL initialization.
+
+[yellow]Default:[-] builtin
+
+[green]Options:[-]
+• [yellow]builtin[-]: Use JVM's built-in random generator
+• [yellow]/dev/urandom[-]: Use OS entropy source (Unix/Linux)
+• [yellow]/dev/random[-]: High-quality OS entropy (may block)
+
+[gray]Only needed for APR-based SSL connectors.[-]`,
+
+		"help.server.service.name": `[::b]Service Name[::-]
+The logical name of this Service container.
+
+[yellow]Default:[-] Catalina
+
+[green]Purpose:[-]
+• Groups Connectors and Engine together
+• Identifies service in logs and JMX
+• Used for service management
+
+[green]Multiple Services:[-]
+You can define multiple Services with different:
+• Network ports (Connectors)
+• Virtual hosts (Engine)
+• Application deployments
+
+[gray]Example: <Service name="Catalina">[-]`,
+
+		"help.server.engine.name": `[::b]Engine Name[::-]
+The logical name of this servlet engine.
+
+[yellow]Default:[-] Catalina
+
+[green]Purpose:[-]
+• Identifies the engine in logs and JMX
+• Used by valve chain and request processing
+• Referenced in cluster configurations
+
+[gray]Usually no need to change from default.[-]`,
+
+		"help.server.engine.defaulthost": `[::b]Default Host[::-]
+The default virtual host name for requests that don't match any Host.
+
+[yellow]Default:[-] localhost
+
+[green]Behavior:[-]
+When a request arrives without a matching Host header:
+• Tomcat routes it to the defaultHost
+• Applications in defaultHost handle the request
+
+[green]Common Values:[-]
+• localhost - For development
+• www.example.com - For production
+• example.com - For domain root
+
+[gray]Must match a <Host> element's name attribute.[-]`,
+
+		"help.server.engine.jvmroute": `[::b]JVM Route[::-]
+Unique identifier for this Tomcat instance in load-balanced environments.
+
+[yellow]Default:[-] (empty)
+
+[green]Purpose:[-]
+Enables session affinity (sticky sessions) with load balancers.
+Session IDs include this route: <session-id>.<jvmRoute>
+
+[green]Example Configuration:[-]
+• Node 1: jvmRoute="node1"
+• Node 2: jvmRoute="node2"
+• Session ID: ABC123.node1
+
+[green]Load Balancers:[-]
+• Apache mod_jk
+• Apache mod_proxy_balancer
+• HAProxy (cookie-based)
+
+[gray]Required for clustered deployments with session persistence.[-]`,
+
 		// Connector Help
 		"help.connector.http": `[::b]HTTP Connector[::-]
 Handles HTTP/1.1 and HTTP/2 client connections.
@@ -1480,22 +1588,6 @@ Defines a web application and its settings.
 [yellow]Production Settings:[-]
 • reloadable="false" (performance)
 • privileged="false" (security)`,
-
-		"help.context.reloadable": `[::b]Reloadable[::-]
-Automatically reload when classes change.
-
-[yellow]Default:[-] false
-
-[green]Behavior:[-]
-• Monitors /WEB-INF/classes and /WEB-INF/lib
-• Reloads application when changes detected
-• Useful during development
-
-[yellow]Production Recommendation:[-]
-Set to "false" for:
-• Better performance (no file monitoring)
-• Stability (no unexpected reloads)
-• Memory efficiency`,
 
 		// Web.xml Help
 		"help.webxml.servlet": `[::b]Servlet Configuration[::-]
@@ -2238,6 +2330,365 @@ URL patterns that map to this servlet.
 
 [gray]Enter one pattern per line[-]`,
 
+		// Filter Form Help
+		"help.filter.name": `[::b]Filter Name[::-]
+Unique identifier for this filter.
+
+[yellow]Rules:[-]
+• Must be unique within web.xml
+• Used in filter-mapping references
+• Case-sensitive
+
+[green]Example:[-]
+authFilter, CorsFilter, EncodingFilter`,
+
+		"help.filter.class": `[::b]Filter Class[::-]
+Fully qualified Java class name of the filter.
+
+[yellow]Requirements:[-]
+• Must implement javax.servlet.Filter
+• Must be in the classpath
+
+[green]Common Filters:[-]
+• org.apache.catalina.filters.CorsFilter
+• org.apache.catalina.filters.SetCharacterEncodingFilter`,
+
+		"help.filter.async": `[::b]Async Supported[::-]
+Enable asynchronous request processing in filter.
+
+[yellow]When to Enable:[-]
+• Filter is part of async servlet chain
+• Long-running filter operations
+
+[green]Requirements:[-]
+• Must be enabled if servlet uses async`,
+
+		"help.filter.initparams": `[::b]Init Parameters[::-]
+Filter initialization parameters.
+
+[yellow]Format:[-]
+paramName=paramValue (one per line)
+
+[green]Access in Filter:[-]
+filterConfig.getInitParameter("name")
+
+[gray]Example:
+encoding=UTF-8
+ignore=false[-]`,
+
+		"help.filter.urlpatterns": `[::b]URL Patterns[::-]
+URL patterns where this filter should be applied.
+
+[yellow]Pattern Types:[-]
+• Exact: /api/users
+• Path: /api/*
+• Extension: *.jsp, *.do
+• All: /*
+
+[gray]Enter one pattern per line[-]`,
+
+		// Session Config Form Help
+		"help.session.timeout": `[::b]Session Timeout[::-]
+Session expiration time in minutes.
+
+[yellow]Default:[-] 30 minutes
+
+[green]Common Values:[-]
+• 30: Standard web apps
+• 15: Sensitive apps (banking)
+• 60: Long-running tasks
+
+[red]Note:[-] 0 or negative = never expire`,
+
+		"help.session.tracking.cookie": `[::b]Cookie Tracking[::-]
+Use cookies for session tracking.
+
+[yellow]Recommended:[-] Enabled
+
+[green]Behavior:[-]
+• JSESSIONID cookie stores session ID
+• Works with cookies enabled browsers
+• Most common tracking method`,
+
+		"help.session.tracking.url": `[::b]URL Tracking[::-]
+Encode session ID in URLs.
+
+[yellow]Use When:[-]
+• Cookies disabled by client
+• Fallback mechanism
+
+[red]Security:[-]
+• Session ID visible in URL
+• Can be logged in server logs`,
+
+		"help.session.tracking.ssl": `[::b]SSL Tracking[::-]
+Use SSL session ID for tracking.
+
+[yellow]Requirements:[-]
+• HTTPS connection required
+• SSL session persistence
+
+[green]Security:[-]
+Most secure option, but HTTPS-only`,
+
+		"help.session.cookie.name": `[::b]Cookie Name[::-]
+Name of the session cookie.
+
+[yellow]Default:[-] JSESSIONID
+
+[green]Custom Name:[-]
+• Useful for multiple apps on same domain
+• Security through obscurity (minor benefit)
+
+[gray]Example: MYAPP_SESSION[-]`,
+
+		"help.session.cookie.domain": `[::b]Cookie Domain[::-]
+Domain scope for the session cookie.
+
+[yellow]Default:[-] Current domain
+
+[green]Use Cases:[-]
+• .example.com: Share across subdomains
+• Blank: Current domain only
+
+[gray]Example: .mycompany.com[-]`,
+
+		"help.session.cookie.path": `[::b]Cookie Path[::-]
+Path scope for the session cookie.
+
+[yellow]Default:[-] Context path
+
+[green]Behavior:[-]
+• /: Cookie sent for all requests
+• /app: Cookie sent only for /app/*
+
+[gray]Usually leave as default[-]`,
+
+		"help.session.cookie.httponly": `[::b]HttpOnly[::-]
+Prevent JavaScript access to cookie.
+
+[yellow]Recommended:[-] true
+
+[green]Security:[-]
+• Protects against XSS attacks
+• Cookie only accessible via HTTP(S)
+• Not readable by JavaScript
+
+[red]Note:[-] Modern security best practice`,
+
+		"help.session.cookie.secure": `[::b]Secure[::-]
+Only send cookie over HTTPS.
+
+[yellow]Use When:[-]
+• Application runs on HTTPS
+• Security requirements mandate it
+
+[red]Warning:[-]
+• Breaks HTTP-only deployments
+• Ensure HTTPS is configured first`,
+
+		// Security Constraint Form Help
+		"help.securityconstraint.resourcename": `[::b]Resource Name[::-]
+Descriptive name for the protected resources.
+
+[yellow]Purpose:[-]
+• Human-readable identifier
+• Documentation and logging
+
+[green]Examples:[-]
+• Admin Area
+• User Profile Pages
+• Protected Resources`,
+
+		"help.securityconstraint.urlpatterns": `[::b]URL Patterns[::-]
+URL patterns to protect with this constraint.
+
+[yellow]Pattern Types:[-]
+• Exact: /admin/dashboard
+• Path: /admin/*
+• Extension: *.secure
+
+[green]Multiple Patterns:[-]
+Enter one pattern per line to protect multiple URLs
+
+[gray]Example:
+/admin/*
+/secure/*[-]`,
+
+		"help.securityconstraint.httpmethods": `[::b]HTTP Methods[::-]
+HTTP methods to apply this constraint to.
+
+[yellow]Common Methods:[-]
+• GET, POST, PUT, DELETE
+• Blank: All methods
+
+[green]Format:[-]
+Comma-separated list
+
+[gray]Example:
+POST,PUT,DELETE[-]
+
+[red]Security:[-]
+Specify methods to restrict unsafe operations`,
+
+		"help.securityconstraint.roles": `[::b]Roles[::-]
+Security roles required to access protected resources.
+
+[yellow]Format:[-]
+One role per line
+
+[green]Behavior:[-]
+• User must have at least one of these roles
+• Roles defined in security-role section
+• Checked against Realm configuration
+
+[gray]Example:
+admin
+manager[-]
+
+[red]Note:[-]
+Empty = deny all access`,
+
+		"help.securityconstraint.transport": `[::b]Transport Guarantee[::-]
+Require HTTPS for these resources.
+
+[yellow]Options:[-]
+• NONE: HTTP or HTTPS
+• INTEGRAL: Data integrity required
+• CONFIDENTIAL: HTTPS required
+
+[green]CONFIDENTIAL:[-]
+• Redirects HTTP to HTTPS
+• Encrypts data in transit
+• Recommended for sensitive data
+
+[gray]INTEGRAL and CONFIDENTIAL are equivalent in Tomcat[-]`,
+
+		// Context Settings Form Help
+		"help.context.reloadable": `[::b]Reloadable[::-]
+Auto-reload when classes change.
+
+[yellow]Default:[-] false
+
+[green]Behavior:[-]
+• Monitors /WEB-INF/classes and /WEB-INF/lib
+• Reloads application on change detection
+• Useful during development
+
+[red]Production:[-] Set to "false" for:
+• Better performance (no file monitoring)
+• Stability (no unexpected reloads)`,
+
+		"help.context.crosscontext": `[::b]CrossContext[::-]
+Allow cross-context dispatching.
+
+[yellow]Default:[-] false
+
+[green]When Enabled:[-]
+• ServletContext.getContext() returns other contexts
+• Enables RequestDispatcher across applications
+
+[red]Security:[-]
+• Keep disabled unless specifically needed
+• Can expose data between applications`,
+
+		"help.context.privileged": `[::b]Privileged[::-]
+Allow access to Tomcat internal classes.
+
+[yellow]Default:[-] false
+
+[green]Required For:[-]
+• Manager application
+• Host Manager application
+• Custom admin tools
+
+[red]Security Warning:[-]
+Only enable for trusted admin applications!`,
+
+		"help.context.cookies": `[::b]Cookies[::-]
+Enable session cookies.
+
+[yellow]Default:[-] true
+
+[green]Options:[-]
+• true: Use cookies for session tracking
+• false: Use URL rewriting instead
+
+[yellow]Note:[-]
+Cookies are more secure than URL rewriting.`,
+
+		"help.context.usehttponly": `[::b]UseHttpOnly[::-]
+Set HttpOnly flag on session cookies.
+
+[yellow]Default:[-] true
+
+[green]Security:[-]
+• Prevents JavaScript access to cookies
+• Mitigates XSS cookie theft attacks
+• Recommended: Always keep enabled`,
+
+		"help.context.sessioncookiename": `[::b]Session Cookie Name[::-]
+Name of the session tracking cookie.
+
+[yellow]Default:[-] JSESSIONID
+
+[green]Custom Names:[-]
+• Useful for multiple Tomcat instances
+• Can help obscure technology stack
+
+[gray]Example: MYSESSIONID[-]`,
+
+		"help.context.cachingallowed": `[::b]Caching Allowed[::-]
+Enable static resource caching.
+
+[yellow]Default:[-] true
+
+[green]Benefits:[-]
+• Reduces disk I/O
+• Faster static file serving
+• Lower memory allocations
+
+[yellow]Disable if:[-]
+Frequent static file changes during development.`,
+
+		"help.context.cachemaxsize": `[::b]Cache Max Size[::-]
+Maximum size of the static resource cache in KB.
+
+[yellow]Default:[-] 10240 (10MB)
+
+[green]Tuning:[-]
+• Increase for static-heavy applications
+• Monitor memory usage
+• Consider total number of contexts
+
+[gray]Recommended: 10240-102400 KB[-]`,
+
+		"help.context.antiresourcelocking": `[::b]Anti Resource Locking[::-]
+Prevent file locking issues on Windows.
+
+[yellow]Default:[-] false
+
+[green]Windows Issue:[-]
+• Open files prevent deletion
+• Can block undeploy/redeploy
+• Enable if experiencing lock issues
+
+[yellow]Side Effect:[-]
+Copies app to temp directory on startup.`,
+
+		"help.context.swallowoutput": `[::b]Swallow Output[::-]
+Redirect System.out/err to logging.
+
+[yellow]Default:[-] false
+
+[green]When Enabled:[-]
+• System.out → logger INFO level
+• System.err → logger ERROR level
+• Useful for legacy apps using println
+
+[yellow]Performance:[-]
+Slight overhead from stream wrapping.`,
+
 		// Additional common keys
 		"help.security.users": `[::b]Users & Roles[::-]
 Manage authentication users in tomcat-users.xml.
@@ -2915,44 +3366,248 @@ Deploy applications when Tomcat starts.
 
 [aqua]Default:[white] true`,
 
-		// Context Property Help
-		"help.context.path": `[yellow]Context Path[white]
+		"help.host.workdir": `[yellow]Work Directory[white]
 
-URL path for this application.
+Scratch directory for context use.
 
-[aqua]Examples:[white]
-  • "" (ROOT application)
-  • /myapp
-  • /api/v1`,
+[aqua]Default:[white] $CATALINA_BASE/work/$engineName/$hostName/$contextName
 
-		"help.context.docbase": `[yellow]Document Base[white]
+Leave empty for automatic path.`,
 
-Path to application files.
+		"help.host.createdirs": `[yellow]Create Directories[white]
 
-Can be WAR file or directory.
-Relative to Host's appBase.`,
-
-		"help.context.crosscontext": `[yellow]Cross Context[white]
-
-Allow access to other contexts.
-
-[aqua]Default:[white] false
-
-Enables getContext() calls.`,
-
-		"help.context.cookies": `[yellow]Cookies[white]
-
-Use cookies for session tracking.
+Automatically create appBase and xmlBase directories.
 
 [aqua]Default:[white] true`,
 
-		"help.context.privileged": `[yellow]Privileged[white]
+		"help.host.deployxml": `[yellow]Deploy XML[white]
 
-Access Tomcat internal classes.
+Allow deployment using META-INF/context.xml.
+
+[aqua]Default:[white] true
+
+Set false for stricter security.`,
+
+		"help.host.copyxml": `[yellow]Copy XML[white]
+
+Copy META-INF/context.xml to xmlBase.
 
 [aqua]Default:[white] false
 
-Required for manager apps.`,
+Preserves context settings across redeployment.`,
+
+		"help.host.deployignore": `[yellow]Deploy Ignore Pattern[white]
+
+Regex pattern for files to ignore during deployment.
+
+[aqua]Example:[white] \\.svn|\\.git
+
+Prevents version control dirs from being deployed.`,
+
+		"help.host.startstopthreads": `[yellow]Start/Stop Threads[white]
+
+Number of threads for parallel context start/stop.
+
+[aqua]Default:[white] 1
+
+Higher values speed up deployment of many contexts.`,
+
+		"help.host.aliases": `[yellow]Host Aliases[white]
+
+Comma-separated list of alternate host names.
+
+[aqua]Example:[white] example.com, www.example.com
+
+All aliases resolve to same Host.`,
+
+		// Context Help (within Host)
+		"help.host.context.path": `[yellow]Context Path[white]
+
+URL path for the web application.
+
+[aqua]Examples:[white]
+  • /myapp → http://host/myapp
+  • / → Root context (default app)
+  • "" → ROOT application`,
+
+		"help.host.context.docbase": `[yellow]Document Base[white]
+
+Directory or WAR file containing the application.
+
+[aqua]Examples:[white]
+  • webapps/myapp
+  • /opt/webapps/myapp.war
+  • myapp (relative to appBase)`,
+
+		"help.host.context.reloadable": `[yellow]Reloadable[white]
+
+Automatically reload when classes change.
+
+[aqua]Default:[white] false
+
+Useful for development, disable in production.`,
+
+		"help.host.context.crosscontext": `[yellow]Cross Context[white]
+
+Allow ServletContext.getContext() to access other contexts.
+
+[aqua]Default:[white] false
+
+Security risk if enabled.`,
+
+		"help.host.context.privileged": `[yellow]Privileged[white]
+
+Allow use of container servlets like Manager.
+
+[aqua]Default:[white] false
+
+Required for manager/admin applications.`,
+
+		"help.host.context.cookies": `[yellow]Cookies[white]
+
+Use cookies for session tracking.
+
+[aqua]Default:[white] true
+
+If false, uses URL rewriting.`,
+
+		"help.host.context.sessioncookiename": `[yellow]Session Cookie Name[white]
+
+Name of the session tracking cookie.
+
+[aqua]Default:[white] JSESSIONID
+
+Change to avoid conflicts.`,
+
+		"help.host.context.sessioncookiepath": `[yellow]Session Cookie Path[white]
+
+Path for session cookie.
+
+[aqua]Default:[white] Context path
+
+Limits cookie scope.`,
+
+		"help.host.context.sessioncookiedomain": `[yellow]Session Cookie Domain[white]
+
+Domain for session cookie.
+
+[aqua]Example:[white] .example.com
+
+Enables cookie sharing across subdomains.`,
+
+		"help.host.context.usehttponly": `[yellow]Use HttpOnly[white]
+
+Set HttpOnly flag on session cookies.
+
+[aqua]Default:[white] true
+
+Prevents JavaScript access to cookies.`,
+
+		"help.host.context.antiresourcelocking": `[yellow]Anti Resource Locking[white]
+
+Copy resources to prevent file locking.
+
+[aqua]Default:[white] false
+
+Useful on Windows for hot deployment.`,
+
+		"help.host.context.swallowoutput": `[yellow]Swallow Output[white]
+
+Redirect System.out/err to logger.
+
+[aqua]Default:[white] false
+
+Captures console output to logs.`,
+
+		"help.host.context.cachingallowed": `[yellow]Caching Allowed[white]
+
+Enable static resource caching.
+
+[aqua]Default:[white] true
+
+Improves performance.`,
+
+		"help.host.context.cachemaxsize": `[yellow]Cache Max Size[white]
+
+Maximum size of static resource cache in KB.
+
+[aqua]Default:[white] 10240 (10MB)`,
+
+		"help.host.context.cachettl": `[yellow]Cache TTL[white]
+
+Time-to-live for cached resources in ms.
+
+[aqua]Default:[white] 5000 (5 seconds)`,
+
+		// Parameter Help
+		"help.host.parameter.name": `[yellow]Parameter Name[white]
+
+Name of the context initialization parameter.
+
+[aqua]Example:[white] configFile
+
+Accessible via ServletContext.getInitParameter()`,
+
+		"help.host.parameter.value": `[yellow]Parameter Value[white]
+
+Value of the context parameter.
+
+[aqua]Example:[white] /WEB-INF/config.xml`,
+
+		"help.host.parameter.override": `[yellow]Override[white]
+
+Allow web.xml to override this value.
+
+[aqua]Default:[white] true`,
+
+		"help.host.parameter.description": `[yellow]Description[white]
+
+Optional description of parameter purpose.`,
+
+		// Manager Help
+		"help.host.manager.class": `[yellow]Manager Class[white]
+
+Session manager implementation.
+
+[aqua]Options:[white]
+  • StandardManager: In-memory sessions
+  • PersistentManager: Disk/DB persistence`,
+
+		"help.host.manager.maxactive": `[yellow]Max Active Sessions[white]
+
+Maximum number of active sessions.
+
+[aqua]Default:[white] -1 (unlimited)
+
+Limits memory usage.`,
+
+		"help.host.manager.sessionidlength": `[yellow]Session ID Length[white]
+
+Length of generated session IDs.
+
+[aqua]Default:[white] 16
+
+Longer IDs are more secure.`,
+
+		"help.host.manager.maxinactive": `[yellow]Max Inactive Interval[white]
+
+Session timeout in seconds.
+
+[aqua]Default:[white] 1800 (30 minutes)`,
+
+		"help.host.manager.pathname": `[yellow]Session File Path[white]
+
+File path for session persistence.
+
+[aqua]Default:[white] SESSIONS.ser
+
+Used by StandardManager on shutdown.`,
+
+		"help.host.manager.processexpires": `[yellow]Process Expires Frequency[white]
+
+How often to check for expired sessions.
+
+[aqua]Default:[white] 6 (every 6 seconds)`,
 
 		// Valve Property Help
 		"help.valve.classname": `[yellow]Valve Class Name[white]
@@ -3008,6 +3663,44 @@ Enable daily log rotation.
 
 [aqua]Default:[white] true`,
 
+		"help.qt.accesslog": `[::b]Access Log Valve[::-]
+
+Configure access logging for HTTP requests.
+
+[aqua]Predefined Patterns:[white]
+  [yellow]common[white]: %h %l %u %t "%r" %s %b
+  [yellow]combined[white]: %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"
+
+[aqua]Pattern Tokens:[white]
+  [yellow]%a[white]: Remote IP address
+  [yellow]%A[white]: Local IP address
+  [yellow]%b[white]: Bytes sent (- if zero)
+  [yellow]%B[white]: Bytes sent
+  [yellow]%h[white]: Remote host name
+  [yellow]%H[white]: Request protocol
+  [yellow]%l[white]: Remote logical username
+  [yellow]%m[white]: Request method
+  [yellow]%p[white]: Local port
+  [yellow]%q[white]: Query string
+  [yellow]%r[white]: First line of request
+  [yellow]%s[white]: HTTP status code
+  [yellow]%S[white]: User session ID
+  [yellow]%t[white]: Date and time
+  [yellow]%u[white]: Remote authenticated user
+  [yellow]%U[white]: Requested URL path
+  [yellow]%v[white]: Local server name
+  [yellow]%D[white]: Time taken (ms)
+  [yellow]%T[white]: Time taken (seconds)
+  [yellow]%F[white]: Time to commit response (ms)
+  [yellow]%I[white]: Current request thread name
+
+[aqua]Header Tokens:[white]
+  [yellow]%{xxx}i[white]: Request header 'xxx'
+  [yellow]%{xxx}o[white]: Response header 'xxx'
+  [yellow]%{xxx}c[white]: Cookie value 'xxx'
+  [yellow]%{xxx}r[white]: Request attribute 'xxx'
+  [yellow]%{xxx}s[white]: Session attribute 'xxx'`,
+
 		"help.valve.remoteaddr.allow": `[yellow]Allow Pattern[white]
 
 Regex for allowed IP addresses.
@@ -3030,6 +3723,254 @@ Seconds before thread is stuck.
 [aqua]Default:[white] 600 (10 minutes)
 
 Logs warning when exceeded.`,
+
+		"help.valve.stuckthread.interruptthreshold": `[yellow]Interrupt Thread Threshold[white]
+
+Seconds before interrupting stuck thread.
+
+[aqua]Default:[white] -1 (disabled)
+
+Setting to positive value interrupts stuck threads.`,
+
+		"help.valve.accesslog.filedateformat": `[yellow]File Date Format[white]
+
+Date format for log file names.
+
+[aqua]Default:[white] yyyy-MM-dd
+
+Used for daily rotation.`,
+
+		"help.valve.accesslog.renameonrotate": `[yellow]Rename On Rotate[white]
+
+Rename logs when rotating.
+
+[aqua]Default:[white] false
+
+If true, renames current file before creating new one.`,
+
+		"help.valve.accesslog.encoding": `[yellow]Encoding[white]
+
+Character encoding for log files.
+
+[aqua]Default:[white] System default
+
+Example: UTF-8, ISO-8859-1`,
+
+		"help.valve.accesslog.buffered": `[yellow]Buffered[white]
+
+Enable output buffering.
+
+[aqua]Default:[white] true
+
+Improves performance but may delay writes.`,
+
+		"help.valve.accesslog.conditionif": `[yellow]Condition If[white]
+
+Only log if ServletRequest attribute is set.
+
+[aqua]Example:[white] log-enabled
+
+Logs request only if attribute exists.`,
+
+		"help.valve.accesslog.conditionunless": `[yellow]Condition Unless[white]
+
+Skip logging if ServletRequest attribute is set.
+
+[aqua]Example:[white] no-log
+
+Skips request if attribute exists.`,
+
+		"help.valve.remoteaddr.denystatus": `[yellow]Deny Status[white]
+
+HTTP status code for denied requests.
+
+[aqua]Default:[white] 403
+
+Example: 404 to hide denied resources.`,
+
+		"help.valve.remoteaddr.addport": `[yellow]Add Connector Port[white]
+
+Append connector port to IP check.
+
+[aqua]Default:[white] false
+
+Format: IP;port (e.g., 192.168.1.1;8080)`,
+
+		"help.valve.remoteaddr.invalidauth": `[yellow]Invalid Auth When Deny[white]
+
+Send authentication required on deny.
+
+[aqua]Default:[white] false
+
+Returns 401 instead of 403.`,
+
+		"help.valve.remoteip.header": `[yellow]Remote IP Header[white]
+
+Header name containing remote IP.
+
+[aqua]Default:[white] X-Forwarded-For
+
+Common with reverse proxies.`,
+
+		"help.valve.remoteip.protocolheader": `[yellow]Protocol Header[white]
+
+Header indicating request protocol.
+
+[aqua]Default:[white] X-Forwarded-Proto
+
+Values: http, https`,
+
+		"help.valve.remoteip.protocolhttps": `[yellow]Protocol Header HTTPS Value[white]
+
+Value indicating HTTPS protocol.
+
+[aqua]Default:[white] https
+
+Custom values supported.`,
+
+		"help.valve.remoteip.portheader": `[yellow]Port Header[white]
+
+Header containing original port.
+
+[aqua]Default:[white] X-Forwarded-Port
+
+Example: 443, 8080`,
+
+		"help.valve.remoteip.internalproxies": `[yellow]Internal Proxies[white]
+
+Regex for trusted internal proxy IPs.
+
+[aqua]Default:[white] 10\\.\\d+\\.\\d+\\.\\d+|...
+
+IPs to trust for X-Forwarded-For.`,
+
+		"help.valve.remoteip.trustedproxies": `[yellow]Trusted Proxies[white]
+
+Regex for additional trusted proxies.
+
+[aqua]Example:[white] 192\\.168\\.1\\.100
+
+External proxies to trust.`,
+
+		"help.valve.remoteip.changelocalport": `[yellow]Change Local Port[white]
+
+Update request.getLocalPort() from header.
+
+[aqua]Default:[white] false
+
+Uses X-Forwarded-Port value.`,
+
+		"help.valve.remoteip.changelocalname": `[yellow]Change Local Name[white]
+
+Update request.getLocalName() from header.
+
+[aqua]Default:[white] false
+
+Uses X-Forwarded-Host value.`,
+
+		"help.valve.errorreport.serverinfo": `[yellow]Show Server Info[white]
+
+Include server information in error pages.
+
+[aqua]Default:[white] true
+
+Shows Tomcat version and details.`,
+
+		"help.valve.errorreport.report": `[yellow]Show Report[white]
+
+Show detailed error report.
+
+[aqua]Default:[white] true
+
+Includes stack traces and request details.`,
+
+		"help.valve.sso.cookiedomain": `[yellow]Cookie Domain[white]
+
+Domain for SSO cookie.
+
+[aqua]Example:[white] .example.com
+
+Enables SSO across subdomains.`,
+
+		"help.valve.sso.cookiename": `[yellow]Cookie Name[white]
+
+Name of SSO cookie.
+
+[aqua]Default:[white] JSESSIONIDSSO
+
+Must be unique per SSO configuration.`,
+
+		"help.valve.sso.requirereauth": `[yellow]Require Reauthentication[white]
+
+Force login for each application.
+
+[aqua]Default:[white] false
+
+If true, disables true single sign-on.`,
+
+		"help.valve.crawler.useragents": `[yellow]Crawler User Agents[white]
+
+Regex pattern for crawler detection.
+
+[aqua]Example:[white] .*[bB]ot.*|.*[sS]pider.*
+
+Manages separate session for crawlers.`,
+
+		"help.valve.crawler.sessioninactiveinterval": `[yellow]Session Inactive Interval[white]
+
+Session timeout for crawlers (seconds).
+
+[aqua]Default:[white] 60
+
+Shorter than normal user sessions.`,
+
+		"help.valve.semaphore.concurrency": `[yellow]Concurrency[white]
+
+Maximum concurrent requests.
+
+[aqua]Default:[white] 10
+
+Limits simultaneous processing.`,
+
+		"help.valve.semaphore.fairness": `[yellow]Fairness[white]
+
+Use fair lock acquisition.
+
+[aqua]Default:[white] false
+
+FIFO order when true.`,
+
+		"help.valve.semaphore.block": `[yellow]Block[white]
+
+Block requests when limit reached.
+
+[aqua]Default:[white] true
+
+If false, rejects immediately with 503.`,
+
+		"help.valve.replication.filter": `[yellow]Filter[white]
+
+Regex filter for session replication.
+
+[aqua]Example:[white] .*\\.gif|.*\\.jpg
+
+Excludes matching requests.`,
+
+		"help.valve.replication.primaryindicator": `[yellow]Primary Indicator[white]
+
+Enable primary session indicator.
+
+[aqua]Default:[white] false
+
+Marks session as primary for this node.`,
+
+		"help.valve.replication.primaryindicatorname": `[yellow]Primary Indicator Name[white]
+
+Session attribute name for primary indicator.
+
+[aqua]Default:[white] org.apache.catalina...
+
+Custom attribute name.`,
 
 		// Realm Property Help
 		"help.realm.classname": `[yellow]Realm Class Name[white]
@@ -3115,6 +4056,46 @@ Base DN for role searches.
 
 [aqua]Example:[white]
   ou=groups,dc=example,dc=com`,
+
+		"help.realm.jndi.connectionName": `[yellow]Connection Name (DN)[white]
+
+Distinguished Name (DN) for LDAP bind.
+
+[aqua]Example:[white]
+  cn=admin,dc=example,dc=com
+
+Required for authentication to LDAP server.`,
+
+		"help.realm.jndi.connectionPwd": `[yellow]Connection Password[white]
+
+Password for LDAP bind authentication.
+
+[red]Security:[white]
+Store securely and use encrypted connections.`,
+
+		"help.realm.jndi.usersearch": `[yellow]User Search[white]
+
+LDAP search filter for finding users.
+
+[aqua]Example:[white]
+  (uid={0})
+  (&(objectClass=person)(uid={0}))`,
+
+		"help.realm.jndi.rolename": `[yellow]Role Name[white]
+
+LDAP attribute containing role name.
+
+[aqua]Default:[white] cn
+
+Common values: cn, ou, groupName`,
+
+		"help.realm.jndi.rolesearch": `[yellow]Role Search[white]
+
+LDAP search filter for finding roles.
+
+[aqua]Example:[white]
+  (member={0})
+  (uniqueMember={1})`,
 
 		// User/Role Property Help
 		"help.user.username": `[yellow]Username[white]
@@ -4031,6 +5012,114 @@ Tomcat이 종료 명령을 수신하는 TCP/IP 포트 번호입니다.
 
 [gray]커넥터는 executor="name" 속성으로 Executor를 참조합니다.[-]`,
 
+		// 서버 폼 상세 도움말
+		"help.server.listener.classname": `[::b]리스너 클래스 이름[::-]
+라이프사이클 리스너의 완전한 Java 클래스 이름입니다.
+
+[green]일반적인 리스너:[-]
+• [yellow]VersionLoggerListener[-]: 시작 시 Tomcat 버전 로그
+• [yellow]AprLifecycleListener[-]: APR (Apache Portable Runtime) 지원
+• [yellow]JreMemoryLeakPreventionListener[-]: 메모리 누수 방지
+• [yellow]GlobalResourcesLifecycleListener[-]: JNDI 전역 리소스
+• [yellow]ThreadLocalLeakPreventionListener[-]: ThreadLocal 정리
+
+[green]목적:[-]
+서버 시작 및 종료 중 라이프사이클 이벤트에 응답합니다.
+
+[gray]예: org.apache.catalina.startup.VersionLoggerListener[-]`,
+
+		"help.server.listener.sslengine": `[::b]SSL 엔진[::-]
+APR 커넥터에서 사용할 SSL 엔진을 지정합니다.
+
+[yellow]기본값:[-] on
+[yellow]옵션:[-] on, off
+
+[green]사용법:[-]
+APR 기반 커넥터에만 적용됩니다.
+더 나은 SSL/TLS 성능을 위해 네이티브 OpenSSL 지원을 활성화합니다.
+
+[gray]APR/native 라이브러리 설치가 필요합니다.[-]`,
+
+		"help.server.listener.sslseed": `[::b]SSL 랜덤 시드[::-]
+SSL 초기화를 위한 랜덤 데이터 소스입니다.
+
+[yellow]기본값:[-] builtin
+
+[green]옵션:[-]
+• [yellow]builtin[-]: JVM의 내장 랜덤 생성기 사용
+• [yellow]/dev/urandom[-]: OS 엔트로피 소스 사용 (Unix/Linux)
+• [yellow]/dev/random[-]: 고품질 OS 엔트로피 (차단 가능)
+
+[gray]APR 기반 SSL 커넥터에만 필요합니다.[-]`,
+
+		"help.server.service.name": `[::b]서비스 이름[::-]
+이 Service 컨테이너의 논리적 이름입니다.
+
+[yellow]기본값:[-] Catalina
+
+[green]목적:[-]
+• 커넥터와 엔진을 함께 그룹화
+• 로그 및 JMX에서 서비스 식별
+• 서비스 관리에 사용
+
+[green]다중 서비스:[-]
+다음과 같이 다른 여러 서비스를 정의할 수 있습니다:
+• 네트워크 포트 (커넥터)
+• 가상 호스트 (엔진)
+• 애플리케이션 배포
+
+[gray]예: <Service name="Catalina">[-]`,
+
+		"help.server.engine.name": `[::b]엔진 이름[::-]
+이 서블릿 엔진의 논리적 이름입니다.
+
+[yellow]기본값:[-] Catalina
+
+[green]목적:[-]
+• 로그 및 JMX에서 엔진 식별
+• 밸브 체인 및 요청 처리에 사용
+• 클러스터 구성에서 참조
+
+[gray]일반적으로 기본값에서 변경할 필요가 없습니다.[-]`,
+
+		"help.server.engine.defaulthost": `[::b]기본 호스트[::-]
+Host와 일치하지 않는 요청을 위한 기본 가상 호스트 이름입니다.
+
+[yellow]기본값:[-] localhost
+
+[green]동작:[-]
+일치하는 Host 헤더가 없는 요청이 도착하면:
+• Tomcat이 defaultHost로 라우팅
+• defaultHost의 애플리케이션이 요청 처리
+
+[green]일반적인 값:[-]
+• localhost - 개발용
+• www.example.com - 운영용
+• example.com - 도메인 루트용
+
+[gray]<Host> 요소의 name 속성과 일치해야 합니다.[-]`,
+
+		"help.server.engine.jvmroute": `[::b]JVM 라우트[::-]
+로드 밸런싱 환경에서 이 Tomcat 인스턴스의 고유 식별자입니다.
+
+[yellow]기본값:[-] (비어 있음)
+
+[green]목적:[-]
+로드 밸런서와 함께 세션 어피니티(스티키 세션)를 활성화합니다.
+세션 ID에 이 라우트가 포함됩니다: <session-id>.<jvmRoute>
+
+[green]예제 구성:[-]
+• 노드 1: jvmRoute="node1"
+• 노드 2: jvmRoute="node2"
+• 세션 ID: ABC123.node1
+
+[green]로드 밸런서:[-]
+• Apache mod_jk
+• Apache mod_proxy_balancer
+• HAProxy (쿠키 기반)
+
+[gray]세션 지속성이 있는 클러스터 배포에 필요합니다.[-]`,
+
 		// 커넥터 도움말
 		"help.connector.http": `[::b]HTTP 커넥터[::-]
 HTTP/1.1 및 HTTP/2 클라이언트 연결을 처리합니다.
@@ -4629,22 +5718,6 @@ conf/logging.properties
 • reloadable="false" (성능)
 • privileged="false" (보안)`,
 
-		"help.context.reloadable": `[::b]리로드 가능[::-]
-클래스 변경 시 자동으로 리로드합니다.
-
-[yellow]기본값:[-] false
-
-[green]동작:[-]
-• /WEB-INF/classes 및 /WEB-INF/lib 모니터링
-• 변경 감지 시 애플리케이션 리로드
-• 개발 중에 유용
-
-[yellow]운영 환경 권장사항:[-]
-다음을 위해 "false"로 설정:
-• 향상된 성능 (파일 모니터링 없음)
-• 안정성 (예상치 못한 리로드 없음)
-• 메모리 효율성`,
-
 		// Web.xml 도움말
 		"help.webxml.servlet": `[::b]서블릿 설정[::-]
 서블릿과 그 매핑을 정의합니다.
@@ -4807,6 +5880,131 @@ debug=true[-]`,
 • 기본: / (전체 처리)
 
 [gray]한 줄에 하나씩 입력[-]`,
+
+		// Context 설정 폼 도움말
+		"help.context.reloadable": `[::b]Reloadable[::-]
+클래스 변경 시 자동 리로드합니다.
+
+[yellow]기본값:[-] false
+
+[green]동작:[-]
+• /WEB-INF/classes와 /WEB-INF/lib 모니터링
+• 변경 감지 시 애플리케이션 리로드
+• 개발 중에 유용
+
+[red]운영 환경:[-] "false"로 설정:
+• 더 나은 성능 (파일 모니터링 없음)
+• 안정성 (예기치 않은 리로드 없음)`,
+
+		"help.context.crosscontext": `[::b]CrossContext[::-]
+크로스 컨텍스트 디스패칭을 허용합니다.
+
+[yellow]기본값:[-] false
+
+[green]활성화 시:[-]
+• ServletContext.getContext()가 다른 컨텍스트 반환
+• 애플리케이션 간 RequestDispatcher 가능
+
+[red]보안:[-]
+• 특별히 필요한 경우가 아니면 비활성화 유지
+• 애플리케이션 간 데이터 노출 가능`,
+
+		"help.context.privileged": `[::b]Privileged[::-]
+Tomcat 내부 클래스 접근을 허용합니다.
+
+[yellow]기본값:[-] false
+
+[green]필요한 경우:[-]
+• Manager 애플리케이션
+• Host Manager 애플리케이션
+• 커스텀 관리 도구
+
+[red]보안 경고:[-]
+신뢰할 수 있는 관리 애플리케이션에만 활성화!`,
+
+		"help.context.cookies": `[::b]Cookies[::-]
+세션 쿠키를 활성화합니다.
+
+[yellow]기본값:[-] true
+
+[green]옵션:[-]
+• true: 세션 추적에 쿠키 사용
+• false: 대신 URL 재작성 사용
+
+[yellow]참고:[-]
+쿠키가 URL 재작성보다 더 안전합니다.`,
+
+		"help.context.usehttponly": `[::b]UseHttpOnly[::-]
+세션 쿠키에 HttpOnly 플래그를 설정합니다.
+
+[yellow]기본값:[-] true
+
+[green]보안:[-]
+• 쿠키에 대한 JavaScript 접근 방지
+• XSS 쿠키 탈취 공격 완화
+• 권장: 항상 활성화 유지`,
+
+		"help.context.sessioncookiename": `[::b]세션 쿠키 이름[::-]
+세션 추적 쿠키의 이름입니다.
+
+[yellow]기본값:[-] JSESSIONID
+
+[green]커스텀 이름:[-]
+• 여러 Tomcat 인스턴스에 유용
+• 기술 스택 숨기기에 도움
+
+[gray]예: MYSESSIONID[-]`,
+
+		"help.context.cachingallowed": `[::b]캐싱 허용[::-]
+정적 리소스 캐싱을 활성화합니다.
+
+[yellow]기본값:[-] true
+
+[green]장점:[-]
+• 디스크 I/O 감소
+• 빠른 정적 파일 서비스
+• 메모리 할당 감소
+
+[yellow]비활성화 시기:[-]
+개발 중 빈번한 정적 파일 변경 시`,
+
+		"help.context.cachemaxsize": `[::b]캐시 최대 크기[::-]
+정적 리소스 캐시의 최대 크기 (KB)입니다.
+
+[yellow]기본값:[-] 10240 (10MB)
+
+[green]튜닝:[-]
+• 정적 파일이 많은 애플리케이션은 증가
+• 메모리 사용량 모니터링
+• 총 컨텍스트 수 고려
+
+[gray]권장: 10240-102400 KB[-]`,
+
+		"help.context.antiresourcelocking": `[::b]Anti Resource Locking[::-]
+Windows에서 파일 잠금 문제를 방지합니다.
+
+[yellow]기본값:[-] false
+
+[green]Windows 문제:[-]
+• 열린 파일은 삭제 방지
+• 배포 해제/재배포 차단 가능
+• 잠금 문제 발생 시 활성화
+
+[yellow]부작용:[-]
+시작 시 앱을 임시 디렉토리로 복사`,
+
+		"help.context.swallowoutput": `[::b]Swallow Output[::-]
+System.out/err를 로깅으로 리디렉션합니다.
+
+[yellow]기본값:[-] false
+
+[green]활성화 시:[-]
+• System.out → 로거 INFO 레벨
+• System.err → 로거 ERROR 레벨
+• println 사용하는 레거시 앱에 유용
+
+[yellow]성능:[-]
+스트림 래핑으로 약간의 오버헤드`,
 
 		// DataSource 속성 도움말
 		"help.ds.name": `[yellow]JNDI 이름[white]
@@ -5460,44 +6658,248 @@ Tomcat 시작 시 애플리케이션을 배포합니다.
 
 [aqua]기본값:[white] true`,
 
-		// Context 속성 도움말
-		"help.context.path": `[yellow]컨텍스트 경로[white]
+		"help.host.workdir": `[yellow]작업 디렉토리[white]
 
-이 애플리케이션의 URL 경로입니다.
+컨텍스트용 임시 디렉토리입니다.
 
-[aqua]예:[white]
-  • "" (ROOT 애플리케이션)
-  • /myapp
-  • /api/v1`,
+[aqua]기본값:[white] $CATALINA_BASE/work/$engineName/$hostName/$contextName
 
-		"help.context.docbase": `[yellow]문서 베이스[white]
+자동 경로를 사용하려면 비워두세요.`,
 
-애플리케이션 파일 경로입니다.
+		"help.host.createdirs": `[yellow]디렉토리 생성[white]
 
-WAR 파일 또는 디렉토리일 수 있습니다.
-Host의 appBase 기준 상대 경로.`,
-
-		"help.context.crosscontext": `[yellow]교차 컨텍스트[white]
-
-다른 컨텍스트에 대한 액세스를 허용합니다.
-
-[aqua]기본값:[white] false
-
-getContext() 호출을 활성화합니다.`,
-
-		"help.context.cookies": `[yellow]쿠키[white]
-
-세션 추적에 쿠키를 사용합니다.
+appBase 및 xmlBase 디렉토리를 자동으로 생성합니다.
 
 [aqua]기본값:[white] true`,
 
-		"help.context.privileged": `[yellow]권한 있음[white]
+		"help.host.deployxml": `[yellow]XML 배포[white]
 
-Tomcat 내부 클래스에 액세스합니다.
+META-INF/context.xml을 사용한 배포를 허용합니다.
+
+[aqua]기본값:[white] true
+
+보안 강화를 위해 false로 설정하세요.`,
+
+		"help.host.copyxml": `[yellow]XML 복사[white]
+
+META-INF/context.xml을 xmlBase로 복사합니다.
 
 [aqua]기본값:[white] false
 
-manager 앱에 필요합니다.`,
+재배포 시 컨텍스트 설정을 보존합니다.`,
+
+		"help.host.deployignore": `[yellow]배포 무시 패턴[white]
+
+배포 중 무시할 파일의 정규식 패턴입니다.
+
+[aqua]예:[white] \\.svn|\\.git
+
+버전 관리 디렉토리 배포를 방지합니다.`,
+
+		"help.host.startstopthreads": `[yellow]시작/중지 스레드[white]
+
+컨텍스트 병렬 시작/중지를 위한 스레드 수입니다.
+
+[aqua]기본값:[white] 1
+
+높은 값은 많은 컨텍스트의 배포 속도를 높입니다.`,
+
+		"help.host.aliases": `[yellow]호스트 별칭[white]
+
+대체 호스트 이름의 쉼표로 구분된 목록입니다.
+
+[aqua]예:[white] example.com, www.example.com
+
+모든 별칭이 동일한 Host로 확인됩니다.`,
+
+		// Context 도움말 (Host 내)
+		"help.host.context.path": `[yellow]컨텍스트 경로[white]
+
+웹 애플리케이션의 URL 경로입니다.
+
+[aqua]예:[white]
+  • /myapp → http://host/myapp
+  • / → 루트 컨텍스트 (기본 앱)
+  • "" → ROOT 애플리케이션`,
+
+		"help.host.context.docbase": `[yellow]문서 베이스[white]
+
+애플리케이션을 포함하는 디렉토리 또는 WAR 파일입니다.
+
+[aqua]예:[white]
+  • webapps/myapp
+  • /opt/webapps/myapp.war
+  • myapp (appBase에 상대적)`,
+
+		"help.host.context.reloadable": `[yellow]재로드 가능[white]
+
+클래스가 변경되면 자동으로 재로드합니다.
+
+[aqua]기본값:[white] false
+
+개발에 유용하며, 프로덕션에서는 비활성화하세요.`,
+
+		"help.host.context.crosscontext": `[yellow]교차 컨텍스트[white]
+
+ServletContext.getContext()가 다른 컨텍스트에 액세스하도록 허용합니다.
+
+[aqua]기본값:[white] false
+
+활성화하면 보안 위험이 있습니다.`,
+
+		"help.host.context.privileged": `[yellow]권한 부여[white]
+
+Manager와 같은 컨테이너 서블릿 사용을 허용합니다.
+
+[aqua]기본값:[white] false
+
+manager/admin 애플리케이션에 필요합니다.`,
+
+		"help.host.context.cookies": `[yellow]쿠키[white]
+
+세션 추적에 쿠키를 사용합니다.
+
+[aqua]기본값:[white] true
+
+false인 경우 URL 재작성을 사용합니다.`,
+
+		"help.host.context.sessioncookiename": `[yellow]세션 쿠키 이름[white]
+
+세션 추적 쿠키의 이름입니다.
+
+[aqua]기본값:[white] JSESSIONID
+
+충돌을 피하려면 변경하세요.`,
+
+		"help.host.context.sessioncookiepath": `[yellow]세션 쿠키 경로[white]
+
+세션 쿠키의 경로입니다.
+
+[aqua]기본값:[white] 컨텍스트 경로
+
+쿠키 범위를 제한합니다.`,
+
+		"help.host.context.sessioncookiedomain": `[yellow]세션 쿠키 도메인[white]
+
+세션 쿠키의 도메인입니다.
+
+[aqua]예:[white] .example.com
+
+하위 도메인 간 쿠키 공유를 활성화합니다.`,
+
+		"help.host.context.usehttponly": `[yellow]HttpOnly 사용[white]
+
+세션 쿠키에 HttpOnly 플래그를 설정합니다.
+
+[aqua]기본값:[white] true
+
+JavaScript의 쿠키 액세스를 방지합니다.`,
+
+		"help.host.context.antiresourcelocking": `[yellow]리소스 잠금 방지[white]
+
+파일 잠금을 방지하기 위해 리소스를 복사합니다.
+
+[aqua]기본값:[white] false
+
+Windows에서 핫 배포에 유용합니다.`,
+
+		"help.host.context.swallowoutput": `[yellow]출력 삼키기[white]
+
+System.out/err을 로거로 리디렉션합니다.
+
+[aqua]기본값:[white] false
+
+콘솔 출력을 로그에 캡처합니다.`,
+
+		"help.host.context.cachingallowed": `[yellow]캐싱 허용[white]
+
+정적 리소스 캐싱을 활성화합니다.
+
+[aqua]기본값:[white] true
+
+성능을 향상시킵니다.`,
+
+		"help.host.context.cachemaxsize": `[yellow]캐시 최대 크기[white]
+
+KB 단위의 정적 리소스 캐시 최대 크기입니다.
+
+[aqua]기본값:[white] 10240 (10MB)`,
+
+		"help.host.context.cachettl": `[yellow]캐시 TTL[white]
+
+밀리초 단위의 캐시된 리소스 생존 시간입니다.
+
+[aqua]기본값:[white] 5000 (5초)`,
+
+		// Parameter 도움말
+		"help.host.parameter.name": `[yellow]매개변수 이름[white]
+
+컨텍스트 초기화 매개변수의 이름입니다.
+
+[aqua]예:[white] configFile
+
+ServletContext.getInitParameter()를 통해 액세스 가능`,
+
+		"help.host.parameter.value": `[yellow]매개변수 값[white]
+
+컨텍스트 매개변수의 값입니다.
+
+[aqua]예:[white] /WEB-INF/config.xml`,
+
+		"help.host.parameter.override": `[yellow]재정의[white]
+
+web.xml이 이 값을 재정의하도록 허용합니다.
+
+[aqua]기본값:[white] true`,
+
+		"help.host.parameter.description": `[yellow]설명[white]
+
+매개변수 목적에 대한 선택적 설명입니다.`,
+
+		// Manager 도움말
+		"help.host.manager.class": `[yellow]Manager 클래스[white]
+
+세션 관리자 구현입니다.
+
+[aqua]옵션:[white]
+  • StandardManager: 메모리 내 세션
+  • PersistentManager: 디스크/DB 지속성`,
+
+		"help.host.manager.maxactive": `[yellow]최대 활성 세션[white]
+
+최대 활성 세션 수입니다.
+
+[aqua]기본값:[white] -1 (무제한)
+
+메모리 사용을 제한합니다.`,
+
+		"help.host.manager.sessionidlength": `[yellow]세션 ID 길이[white]
+
+생성된 세션 ID의 길이입니다.
+
+[aqua]기본값:[white] 16
+
+더 긴 ID가 더 안전합니다.`,
+
+		"help.host.manager.maxinactive": `[yellow]최대 비활성 간격[white]
+
+초 단위의 세션 시간 초과입니다.
+
+[aqua]기본값:[white] 1800 (30분)`,
+
+		"help.host.manager.pathname": `[yellow]세션 파일 경로[white]
+
+세션 지속성을 위한 파일 경로입니다.
+
+[aqua]기본값:[white] SESSIONS.ser
+
+종료 시 StandardManager가 사용합니다.`,
+
+		"help.host.manager.processexpires": `[yellow]만료 처리 빈도[white]
+
+만료된 세션을 확인하는 빈도입니다.
+
+[aqua]기본값:[white] 6 (6초마다)`,
 
 		// Valve 속성 도움말
 		"help.valve.classname": `[yellow]Valve 클래스 이름[white]
@@ -5552,6 +6954,44 @@ CATALINA_BASE 기준 상대 경로.`,
 일별 로그 로테이션을 활성화합니다.
 
 [aqua]기본값:[white] true`,
+
+		"help.qt.accesslog": `[::b]액세스 로그 Valve[::-]
+
+HTTP 요청에 대한 액세스 로깅을 설정합니다.
+
+[aqua]사전 정의된 패턴:[white]
+  [yellow]common[white]: %h %l %u %t "%r" %s %b
+  [yellow]combined[white]: %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"
+
+[aqua]패턴 토큰:[white]
+  [yellow]%a[white]: 원격 IP 주소
+  [yellow]%A[white]: 로컬 IP 주소
+  [yellow]%b[white]: 전송 바이트 (0일 경우 -)
+  [yellow]%B[white]: 전송 바이트
+  [yellow]%h[white]: 원격 호스트명
+  [yellow]%H[white]: 요청 프로토콜
+  [yellow]%l[white]: 원격 논리 사용자명
+  [yellow]%m[white]: 요청 메서드
+  [yellow]%p[white]: 로컬 포트
+  [yellow]%q[white]: 쿼리 문자열
+  [yellow]%r[white]: 요청 첫 줄
+  [yellow]%s[white]: HTTP 상태 코드
+  [yellow]%S[white]: 사용자 세션 ID
+  [yellow]%t[white]: 날짜 및 시간
+  [yellow]%u[white]: 원격 인증 사용자
+  [yellow]%U[white]: 요청 URL 경로
+  [yellow]%v[white]: 로컬 서버명
+  [yellow]%D[white]: 소요 시간 (ms)
+  [yellow]%T[white]: 소요 시간 (초)
+  [yellow]%F[white]: 응답 커밋 시간 (ms)
+  [yellow]%I[white]: 현재 요청 스레드명
+
+[aqua]헤더 토큰:[white]
+  [yellow]%{xxx}i[white]: 요청 헤더 'xxx'
+  [yellow]%{xxx}o[white]: 응답 헤더 'xxx'
+  [yellow]%{xxx}c[white]: 쿠키 값 'xxx'
+  [yellow]%{xxx}r[white]: 요청 속성 'xxx'
+  [yellow]%{xxx}s[white]: 세션 속성 'xxx'`,
 
 		"help.valve.remoteaddr.allow": `[yellow]허용 패턴[white]
 
@@ -5660,6 +7100,46 @@ LDAP 서버 URL입니다.
 
 [aqua]예:[white]
   ou=groups,dc=example,dc=com`,
+
+		"help.realm.jndi.connectionName": `[yellow]연결 이름 (DN)[white]
+
+LDAP 바인딩을 위한 DN(Distinguished Name)입니다.
+
+[aqua]예:[white]
+  cn=admin,dc=example,dc=com
+
+LDAP 서버 인증에 필요합니다.`,
+
+		"help.realm.jndi.connectionPwd": `[yellow]연결 비밀번호[white]
+
+LDAP 바인딩 인증을 위한 비밀번호입니다.
+
+[red]보안:[white]
+안전하게 저장하고 암호화된 연결을 사용하세요.`,
+
+		"help.realm.jndi.usersearch": `[yellow]사용자 검색[white]
+
+사용자를 찾기 위한 LDAP 검색 필터입니다.
+
+[aqua]예:[white]
+  (uid={0})
+  (&(objectClass=person)(uid={0}))`,
+
+		"help.realm.jndi.rolename": `[yellow]역할 이름[white]
+
+역할 이름을 포함하는 LDAP 속성입니다.
+
+[aqua]기본값:[white] cn
+
+일반 값: cn, ou, groupName`,
+
+		"help.realm.jndi.rolesearch": `[yellow]역할 검색[white]
+
+역할을 찾기 위한 LDAP 검색 필터입니다.
+
+[aqua]예:[white]
+  (member={0})
+  (uniqueMember={1})`,
 
 		// User/Role 속성 도움말
 		"help.user.username": `[yellow]사용자명[white]
@@ -7189,6 +8669,124 @@ Webアプリケーションとその設定を定義します。
 • 安定性 (予期しないリロードなし)
 • メモリ効率`,
 
+		"help.context.crosscontext": `[::b]CrossContext[::-]
+他のコンテキストへのServletContext取得を許可します。
+
+[yellow]デフォルト:[-] false
+
+[green]動作:[-]
+• trueの場合、getContext()で他のアプリにアクセス可能
+• RequestDispatcher経由でのクロスアプリディスパッチを許可
+
+[yellow]セキュリティ考慮事項:[-]
+• 信頼できる環境でのみ有効化
+• アプリ間のデータ共有を許可
+• 本番環境ではfalse推奨`,
+
+		"help.context.privileged": `[::b]Privileged[::-]
+コンテナサーブレット(Manager等)の使用を許可します。
+
+[yellow]デフォルト:[-] false
+
+[green]効果:[-]
+• trueの場合、内部Tomcatクラスにアクセス可能
+• Managerアプリに必要
+• 通常のWebアプリには不要
+
+[yellow]セキュリティ警告:[-]
+• 絶対に必要な場合のみ有効化
+• Tomcatの内部への完全アクセスを許可
+• 本番環境ではfalse推奨`,
+
+		"help.context.cookies": `[::b]Cookies[::-]
+セッショントラッキングにクッキーを使用します。
+
+[yellow]デフォルト:[-] true
+
+[green]動作:[-]
+• trueの場合、JSESSIONIDクッキーでセッション維持
+• falseの場合、URLリライティングのみ使用
+
+[yellow]推奨事項:[-]
+• ほとんどのアプリでtrueのまま
+• クッキーが最も安全なセッショントラッキング方法`,
+
+		"help.context.usehttponly": `[::b]UseHttpOnly[::-]
+セッションクッキーにHttpOnlyフラグを設定します。
+
+[yellow]デフォルト:[-] true
+
+[green]セキュリティ効果:[-]
+• JavaScriptからのクッキーアクセスを防止
+• XSS攻撃によるセッションハイジャックを軽減
+• セキュリティのため常にtrueを推奨`,
+
+		"help.context.sessioncookiename": `[::b]セッションクッキー名[::-]
+セッションIDクッキーに使用する名前です。
+
+[yellow]デフォルト:[-] JSESSIONID
+
+[green]カスタマイズの理由:[-]
+• 複数のTomcatインスタンス間での競合を回避
+• 使用技術の隠蔽 (セキュリティスルーオブスキュリティ)
+• アプリケーション固有の命名規則`,
+
+		"help.context.cachingallowed": `[::b]キャッシュ許可[::-]
+静的リソースのキャッシュを許可します。
+
+[yellow]デフォルト:[-] true
+
+[green]効果:[-]
+• trueの場合、静的ファイルをメモリにキャッシュ
+• 静的リソースアクセスのパフォーマンス向上
+• cacheMaxSizeに達するとエビクション発生
+
+[yellow]検討事項:[-]
+• メモリ使用量に影響
+• 静的リソースが多いアプリで有効`,
+
+		"help.context.cachemaxsize": `[::b]キャッシュ最大サイズ[::-]
+静的リソースキャッシュの最大サイズ(KB単位)です。
+
+[yellow]デフォルト:[-] 10240 (10MB)
+
+[green]設定ガイド:[-]
+• ヒープサイズと静的コンテンツに基づいて調整
+• 値を増やすとキャッシュヒット率向上
+• 使用可能なメモリを考慮
+
+[yellow]監視:[-]
+• キャッシュヒット/ミス率をログで確認
+• OutOfMemory発生時は値を減らす`,
+
+		"help.context.antiresourcelocking": `[::b]Anti Resource Locking[::-]
+リソースファイルのロックを防止します。
+
+[yellow]デフォルト:[-] false
+
+[green]Windows用:[-]
+• trueの場合、リソースを一時ディレクトリにコピー
+• WARファイルの更新時のロックを防止
+• Windows環境で便利
+
+[yellow]注意事項:[-]
+• 起動時間が増加
+• 追加のディスク容量を使用
+• 必要な場合のみ有効化`,
+
+		"help.context.swallowoutput": `[::b]Swallow Output[::-]
+System.out/errをログにリダイレクトします。
+
+[yellow]デフォルト:[-] false
+
+[green]効果:[-]
+• trueの場合、コンソール出力をServletContextログにリダイレクト
+• 適切なログフレームワークを使用しないアプリに便利
+
+[yellow]考慮事項:[-]
+• パフォーマンスに若干の影響
+• 本来はlog4jやSLF4J等のログフレームワーク使用が推奨`,
+
 		// Web.xmlヘルプ
 		"help.webxml.servlet": `[::b]サーブレット設定[::-]
 サーブレットとそのマッピングを定義します。
@@ -8002,44 +9600,248 @@ Tomcat起動時にアプリケーションをデプロイします。
 
 [aqua]デフォルト:[white] true`,
 
-		// Context プロパティヘルプ
-		"help.context.path": `[yellow]コンテキストパス[white]
+		"help.host.workdir": `[yellow]作業ディレクトリ[white]
 
-このアプリケーションのURLパスです。
+コンテキスト用の一時ディレクトリです。
 
-[aqua]例:[white]
-  • "" (ROOTアプリケーション)
-  • /myapp
-  • /api/v1`,
+[aqua]デフォルト:[white] $CATALINA_BASE/work/$engineName/$hostName/$contextName
 
-		"help.context.docbase": `[yellow]ドキュメントベース[white]
+自動パスを使用する場合は空のままにします。`,
 
-アプリケーションファイルへのパスです。
+		"help.host.createdirs": `[yellow]ディレクトリ作成[white]
 
-WARファイルまたはディレクトリ。
-HostのappBaseからの相対パス。`,
-
-		"help.context.crosscontext": `[yellow]クロスコンテキスト[white]
-
-他のコンテキストへのアクセスを許可します。
-
-[aqua]デフォルト:[white] false
-
-getContext()呼び出しを有効にします。`,
-
-		"help.context.cookies": `[yellow]クッキー[white]
-
-セッション追跡にクッキーを使用します。
+appBaseとxmlBaseディレクトリを自動的に作成します。
 
 [aqua]デフォルト:[white] true`,
 
-		"help.context.privileged": `[yellow]特権[white]
+		"help.host.deployxml": `[yellow]XML デプロイ[white]
 
-Tomcat内部クラスにアクセスします。
+META-INF/context.xmlを使用したデプロイを許可します。
+
+[aqua]デフォルト:[white] true
+
+セキュリティ強化のためfalseに設定します。`,
+
+		"help.host.copyxml": `[yellow]XML コピー[white]
+
+META-INF/context.xmlをxmlBaseにコピーします。
 
 [aqua]デフォルト:[white] false
 
-マネージャーアプリに必要です。`,
+再デプロイ時にコンテキスト設定を保持します。`,
+
+		"help.host.deployignore": `[yellow]デプロイ無視パターン[white]
+
+デプロイ中に無視するファイルの正規表現パターンです。
+
+[aqua]例:[white] \\.svn|\\.git
+
+バージョン管理ディレクトリのデプロイを防ぎます。`,
+
+		"help.host.startstopthreads": `[yellow]起動/停止スレッド[white]
+
+コンテキストの並列起動/停止のためのスレッド数です。
+
+[aqua]デフォルト:[white] 1
+
+高い値は多くのコンテキストのデプロイを高速化します。`,
+
+		"help.host.aliases": `[yellow]ホストエイリアス[white]
+
+代替ホスト名のカンマ区切りリストです。
+
+[aqua]例:[white] example.com, www.example.com
+
+すべてのエイリアスが同じHostに解決されます。`,
+
+		// Context ヘルプ (Host内)
+		"help.host.context.path": `[yellow]コンテキストパス[white]
+
+Webアプリケーションのパスです。
+
+[aqua]例:[white]
+  • /myapp → http://host/myapp
+  • / → ルートコンテキスト (デフォルトアプリ)
+  • "" → ROOTアプリケーション`,
+
+		"help.host.context.docbase": `[yellow]ドキュメントベース[white]
+
+アプリケーションを含むディレクトリまたはWARファイルです。
+
+[aqua]例:[white]
+  • webapps/myapp
+  • /opt/webapps/myapp.war
+  • myapp (appBaseに相対的)`,
+
+		"help.host.context.reloadable": `[yellow]リロード可能[white]
+
+クラスが変更されたときに自動的にリロードします。
+
+[aqua]デフォルト:[white] false
+
+開発に便利ですが、本番環境では無効にしてください。`,
+
+		"help.host.context.crosscontext": `[yellow]クロスコンテキスト[white]
+
+ServletContext.getContext()が他のコンテキストにアクセスすることを許可します。
+
+[aqua]デフォルト:[white] false
+
+有効にするとセキュリティリスクがあります。`,
+
+		"help.host.context.privileged": `[yellow]特権付与[white]
+
+Managerなどのコンテナサーブレットの使用を許可します。
+
+[aqua]デフォルト:[white] false
+
+manager/adminアプリケーションに必要です。`,
+
+		"help.host.context.cookies": `[yellow]クッキー[white]
+
+セッショントラッキングにクッキーを使用します。
+
+[aqua]デフォルト:[white] true
+
+falseの場合はURL書き換えを使用します。`,
+
+		"help.host.context.sessioncookiename": `[yellow]セッションクッキー名[white]
+
+セッショントラッキングクッキーの名前です。
+
+[aqua]デフォルト:[white] JSESSIONID
+
+競合を避けるために変更します。`,
+
+		"help.host.context.sessioncookiepath": `[yellow]セッションクッキーパス[white]
+
+セッションクッキーのパスです。
+
+[aqua]デフォルト:[white] コンテキストパス
+
+クッキーのスコープを制限します。`,
+
+		"help.host.context.sessioncookiedomain": `[yellow]セッションクッキードメイン[white]
+
+セッションクッキーのドメインです。
+
+[aqua]例:[white] .example.com
+
+サブドメイン間でのクッキー共有を有効にします。`,
+
+		"help.host.context.usehttponly": `[yellow]HttpOnly 使用[white]
+
+セッションクッキーにHttpOnlyフラグを設定します。
+
+[aqua]デフォルト:[white] true
+
+JavaScriptによるクッキーアクセスを防ぎます。`,
+
+		"help.host.context.antiresourcelocking": `[yellow]リソースロック防止[white]
+
+ファイルロックを防ぐためにリソースをコピーします。
+
+[aqua]デフォルト:[white] false
+
+Windowsでのホットデプロイに便利です。`,
+
+		"help.host.context.swallowoutput": `[yellow]出力スワロー[white]
+
+System.out/errをロガーにリダイレクトします。
+
+[aqua]デフォルト:[white] false
+
+コンソール出力をログにキャプチャします。`,
+
+		"help.host.context.cachingallowed": `[yellow]キャッシング許可[white]
+
+静的リソースのキャッシングを有効にします。
+
+[aqua]デフォルト:[white] true
+
+パフォーマンスが向上します。`,
+
+		"help.host.context.cachemaxsize": `[yellow]キャッシュ最大サイズ[white]
+
+KB単位の静的リソースキャッシュの最大サイズです。
+
+[aqua]デフォルト:[white] 10240 (10MB)`,
+
+		"help.host.context.cachettl": `[yellow]キャッシュ TTL[white]
+
+ミリ秒単位のキャッシュされたリソースの生存時間です。
+
+[aqua]デフォルト:[white] 5000 (5秒)`,
+
+		// Parameter ヘルプ
+		"help.host.parameter.name": `[yellow]パラメータ名[white]
+
+コンテキスト初期化パラメータの名前です。
+
+[aqua]例:[white] configFile
+
+ServletContext.getInitParameter()経由でアクセス可能`,
+
+		"help.host.parameter.value": `[yellow]パラメータ値[white]
+
+コンテキストパラメータの値です。
+
+[aqua]例:[white] /WEB-INF/config.xml`,
+
+		"help.host.parameter.override": `[yellow]オーバーライド[white]
+
+web.xmlがこの値をオーバーライドすることを許可します。
+
+[aqua]デフォルト:[white] true`,
+
+		"help.host.parameter.description": `[yellow]説明[white]
+
+パラメータの目的に関するオプションの説明です。`,
+
+		// Manager ヘルプ
+		"help.host.manager.class": `[yellow]Managerクラス[white]
+
+セッションマネージャ実装です。
+
+[aqua]オプション:[white]
+  • StandardManager: メモリ内セッション
+  • PersistentManager: ディスク/DB永続化`,
+
+		"help.host.manager.maxactive": `[yellow]最大アクティブセッション[white]
+
+最大アクティブセッション数です。
+
+[aqua]デフォルト:[white] -1 (無制限)
+
+メモリ使用量を制限します。`,
+
+		"help.host.manager.sessionidlength": `[yellow]セッションID長[white]
+
+生成されたセッションIDの長さです。
+
+[aqua]デフォルト:[white] 16
+
+長いIDはより安全です。`,
+
+		"help.host.manager.maxinactive": `[yellow]最大非アクティブ間隔[white]
+
+秒単位のセッションタイムアウトです。
+
+[aqua]デフォルト:[white] 1800 (30分)`,
+
+		"help.host.manager.pathname": `[yellow]セッションファイルパス[white]
+
+セッション永続化のためのファイルパスです。
+
+[aqua]デフォルト:[white] SESSIONS.ser
+
+シャットダウン時にStandardManagerが使用します。`,
+
+		"help.host.manager.processexpires": `[yellow]期限切れ処理頻度[white]
+
+期限切れセッションをチェックする頻度です。
+
+[aqua]デフォルト:[white] 6 (6秒ごと)`,
 
 		// Valve プロパティヘルプ
 		"help.valve.classname": `[yellow]Valveクラス名[white]
@@ -8094,6 +9896,44 @@ CATALINA_BASEからの相対パス。`,
 日次ログローテーションを有効にします。
 
 [aqua]デフォルト:[white] true`,
+
+		"help.qt.accesslog": `[::b]アクセスログValve[::-]
+
+HTTPリクエストのアクセスログを設定します。
+
+[aqua]定義済みパターン:[white]
+  [yellow]common[white]: %h %l %u %t "%r" %s %b
+  [yellow]combined[white]: %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"
+
+[aqua]パターントークン:[white]
+  [yellow]%a[white]: リモートIPアドレス
+  [yellow]%A[white]: ローカルIPアドレス
+  [yellow]%b[white]: 送信バイト数 (0の場合は-)
+  [yellow]%B[white]: 送信バイト数
+  [yellow]%h[white]: リモートホスト名
+  [yellow]%H[white]: リクエストプロトコル
+  [yellow]%l[white]: リモート論理ユーザー名
+  [yellow]%m[white]: リクエストメソッド
+  [yellow]%p[white]: ローカルポート
+  [yellow]%q[white]: クエリ文字列
+  [yellow]%r[white]: リクエスト1行目
+  [yellow]%s[white]: HTTPステータスコード
+  [yellow]%S[white]: ユーザーセッションID
+  [yellow]%t[white]: 日時
+  [yellow]%u[white]: リモート認証ユーザー
+  [yellow]%U[white]: リクエストURLパス
+  [yellow]%v[white]: ローカルサーバー名
+  [yellow]%D[white]: 所要時間 (ms)
+  [yellow]%T[white]: 所要時間 (秒)
+  [yellow]%F[white]: レスポンスコミット時間 (ms)
+  [yellow]%I[white]: 現在のリクエストスレッド名
+
+[aqua]ヘッダートークン:[white]
+  [yellow]%{xxx}i[white]: リクエストヘッダー 'xxx'
+  [yellow]%{xxx}o[white]: レスポンスヘッダー 'xxx'
+  [yellow]%{xxx}c[white]: Cookie値 'xxx'
+  [yellow]%{xxx}r[white]: リクエスト属性 'xxx'
+  [yellow]%{xxx}s[white]: セッション属性 'xxx'`,
 
 		"help.valve.remoteaddr.allow": `[yellow]許可パターン[white]
 
@@ -8202,6 +10042,46 @@ LDAPサーバーURLです。
 
 [aqua]例:[white]
   ou=groups,dc=example,dc=com`,
+
+		"help.realm.jndi.connectionName": `[yellow]接続名 (DN)[white]
+
+LDAPバインド用のDN(Distinguished Name)です。
+
+[aqua]例:[white]
+  cn=admin,dc=example,dc=com
+
+LDAPサーバー認証に必要です。`,
+
+		"help.realm.jndi.connectionPwd": `[yellow]接続パスワード[white]
+
+LDAPバインド認証用のパスワードです。
+
+[red]セキュリティ:[white]
+安全に保存し、暗号化された接続を使用してください。`,
+
+		"help.realm.jndi.usersearch": `[yellow]ユーザー検索[white]
+
+ユーザーを検索するためのLDAP検索フィルターです。
+
+[aqua]例:[white]
+  (uid={0})
+  (&(objectClass=person)(uid={0}))`,
+
+		"help.realm.jndi.rolename": `[yellow]ロール名[white]
+
+ロール名を含むLDAP属性です。
+
+[aqua]デフォルト:[white] cn
+
+一般的な値: cn, ou, groupName`,
+
+		"help.realm.jndi.rolesearch": `[yellow]ロール検索[white]
+
+ロールを検索するためのLDAP検索フィルターです。
+
+[aqua]例:[white]
+  (member={0})
+  (uniqueMember={1})`,
 
 		// User/Role プロパティヘルプ
 		"help.user.username": `[yellow]ユーザー名[white]

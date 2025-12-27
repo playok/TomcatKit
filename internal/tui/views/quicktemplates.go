@@ -467,36 +467,87 @@ Enable response compression for text-based content.
 func (v *QuickTemplatesView) showAccessLogTemplate() {
 	form := tview.NewForm()
 
-	infoText := `[yellow]Access Log Valve[white]
+	// Help panel
+	helpPanel := NewDynamicHelpPanel()
+	helpPanel.SetHelpKey("help.qt.accesslog")
 
-Configure access logging for HTTP requests.
+	// Preview panel
+	previewPanel := NewPreviewPanel()
 
-[green]Common patterns:[white]
-  - common: %h %l %u %t "%r" %s %b
-  - combined: %h %l %u %t "%r" %s %b "%{Referer}i" "%{User-Agent}i"
-`
-	form.AddTextView("Information", infoText, 60, 9, true, false)
+	// Variables for form fields
+	directory := "logs"
+	prefix := "localhost_access_log"
+	suffix := ".txt"
+	selectedPattern := 0 // 0=combined, 1=common, 2=custom
+	customPattern := "%h %l %u %t \"%r\" %s %b"
+
+	// Function to update XML preview
+	updatePreview := func() {
+		pattern := "combined"
+		switch selectedPattern {
+		case 0:
+			pattern = "combined"
+		case 1:
+			pattern = "common"
+		case 2:
+			pattern = customPattern
+		}
+
+		valve := server.Valve{
+			ClassName: "org.apache.catalina.valves.AccessLogValve",
+			Directory: directory,
+			Prefix:    prefix,
+			Suffix:    suffix,
+			Pattern:   pattern,
+			Rotatable: true,
+		}
+		previewPanel.SetXMLPreview(GenerateValveXML(&valve))
+	}
 
 	patterns := []string{"combined (Recommended)", "common", "custom"}
-	form.AddDropDown("Log Pattern", patterns, 0, nil)
+	form.AddDropDown("Log Pattern", patterns, 0, func(option string, index int) {
+		selectedPattern = index
+		// Show/hide custom pattern field
+		if index == 2 {
+			// Custom pattern selected - show input field
+			if form.GetFormItemByLabel("Custom Pattern") == nil {
+				form.AddInputField("Custom Pattern", customPattern, 50, nil, func(text string) {
+					customPattern = text
+					updatePreview()
+				})
+			}
+		}
+		updatePreview()
+	})
 
-	directory := "logs"
 	form.AddInputField("Directory", directory, 30, nil, func(text string) {
 		directory = text
+		updatePreview()
 	})
 
-	prefix := "localhost_access_log"
 	form.AddInputField("File Prefix", prefix, 30, nil, func(text string) {
 		prefix = text
+		updatePreview()
 	})
 
-	suffix := ".txt"
 	form.AddInputField("File Suffix", suffix, 10, nil, func(text string) {
 		suffix = text
+		updatePreview()
 	})
 
 	form.AddButton("[white:green]Apply Template[-:-]", func() {
 		cfg := v.configService.GetServer()
+
+		// Determine pattern based on selection
+		pattern := "combined"
+		switch selectedPattern {
+		case 0:
+			pattern = "combined"
+		case 1:
+			pattern = "common"
+		case 2:
+			pattern = customPattern
+		}
 
 		// Create access log valve
 		valve := server.Valve{
@@ -504,7 +555,7 @@ Configure access logging for HTTP requests.
 			Directory: directory,
 			Prefix:    prefix,
 			Suffix:    suffix,
-			Pattern:   "combined",
+			Pattern:   pattern,
 			Rotatable: true,
 		}
 
@@ -531,7 +582,13 @@ Configure access logging for HTTP requests.
 	form.SetButtonBackgroundColor(tcell.ColorDefault)
 	form.SetBorder(true).SetTitle(" Access Log Template ")
 
-	form.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Initial preview
+	updatePreview()
+
+	// Create layout with form, help panel, and preview
+	flex := CreateFormWithHelpAndPreview(form, helpPanel, previewPanel)
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEscape {
 			v.showMainMenu()
 			return nil
@@ -539,7 +596,7 @@ Configure access logging for HTTP requests.
 		return event
 	})
 
-	v.pages.AddAndSwitchToPage("accesslog-template", form, true)
+	v.pages.AddAndSwitchToPage("accesslog-template", flex, true)
 }
 
 // showSecurityHardeningTemplate shows security hardening options
