@@ -11,7 +11,9 @@ import (
 )
 
 var (
-	version = "0.1.0"
+	version = "dev"
+	commit  = "none"
+	date    = "unknown"
 )
 
 func main() {
@@ -51,6 +53,12 @@ Environment Variables:
 	// Handle version flag
 	if *showVersion {
 		fmt.Printf("TomcatKit v%s\n", version)
+		if commit != "none" {
+			fmt.Printf("  Commit: %s\n", commit)
+		}
+		if date != "unknown" {
+			fmt.Printf("  Built:  %s\n", date)
+		}
 		os.Exit(0)
 	}
 
